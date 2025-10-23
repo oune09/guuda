@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('nom_utilisateur');
             $table->string('premon_utilisateur');
             $table->string('email_utilisateur')->unique();
+            $table->string('cnib');
             $table->string('mot_de_passe_utilisateur');
             $table->date('date_naissance_utilisateur');
             $table->string('telephone_utilisateur')->unique();

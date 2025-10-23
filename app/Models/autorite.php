@@ -4,8 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class utilisateur extends Model
+class autorite extends Model
 {
     //
-    
 }
