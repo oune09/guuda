@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('autorites', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cassade');
             $table->string('organisation');
             $table->string('matricule');
-
+            $table->string('zone_responsabilite');
         });
     }
 
