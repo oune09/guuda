@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('organisation');
             $table->string('matricule');
             $table->string('zone_responsabilite');
+            $table->boolean('statut')->default(true);
         });
     }
 
