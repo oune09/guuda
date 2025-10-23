@@ -14,6 +14,18 @@ return new class extends Migration
         Schema::create('utilisateurs', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
+            $table->string('nom_utilisateur');
+            $table->string('premon_utilisateur');
+            $table->string('email_utilisateur')->unique();
+            $table->string('mot_de_passe_utilisateur');
+            $table->date('date_naissance_utilisateur');
+            $table->string('telephone_utilisateur')->unique();
+            $table->string('photo')->nullable(); 
+            $table->enum('role_utilisateur',['citoyen','autorite','administrateur'])->default('citoyen');
+            $table->string('ville');
+            $table->string('secteur');
+            $table->string('quartier');
+
         });
     }
 
