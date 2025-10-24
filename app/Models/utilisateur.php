@@ -44,5 +44,7 @@ class utilisateur extends Model
     {
     return $this->hasMany(Incident::class);
     }
+     
+    
 
 }
