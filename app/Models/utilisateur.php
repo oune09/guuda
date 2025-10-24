@@ -16,7 +16,7 @@ class utilisateur extends Model
         'telephone_utilisateur',
         'photo',
         'role_utilisateur',
-        'vile',
+        'ville',
         'secteur',
         'quatier',
 
