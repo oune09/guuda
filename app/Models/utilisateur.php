@@ -10,7 +10,7 @@ class utilisateur extends Model
     protected  $fillable = [
         'nom_utilisateur',
         'prenom_utilisateur',
-        'email_utilisateru',
+        'email_utilisateur',
         'cnib',
         'date_naissance_utilisateur',
         'telephone_utilisateur',
@@ -33,5 +33,16 @@ class utilisateur extends Model
         'date_naissance_utilisateur' => 'date',
 
     ];
+
+
+    public function autorite()
+    {
+        return this->hasOne(Autorite::class);
+    }
+
+    public function incident()
+    {
+    return $this->hasMany(Incident::class);
+    }
 
 }
