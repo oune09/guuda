@@ -45,6 +45,35 @@ class utilisateur extends Model
     return $this->hasMany(Incident::class);
     }
      
+    public function scopeCitoyens($query)
+    {
+        return $query->where('role_utilisateur','citoyen');
+    }
+
+    public function scopeAurotites($query)
+     {
+        return $query->where('role_utilisateur','autorite');
+     }
+
+     public function scopeAdministrateures($query)
+     {
+        return $query->where('role_utilisateur','administrateur');
+     }
     
+
+     public function citoyen()
+     {
+        return $this->role === 'citoyen';
+     }
+
+     public function aurorite()
+     {
+        return $this->role === 'autorite';
+     }
+
+     public function administrateur()
+     {
+        return $this->role ==='administrateur';
+     }
 
 }
