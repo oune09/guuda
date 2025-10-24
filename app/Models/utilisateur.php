@@ -30,6 +30,7 @@ class utilisateur extends Model
 
     protected $casts = [
         'email_verified_at' =>'datetime',
+        'date_naissance_utilisateur' => 'date',
 
     ];
 
