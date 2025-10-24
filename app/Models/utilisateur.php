@@ -12,7 +12,7 @@ class utilisateur extends Model
         'prenom_utilisateur',
         'email_utilisateru',
         'cnib',
-        'date_naissance_utilisateru',
+        'date_naissance_utilisateur',
         'telephone_utilisateur',
         'photo',
         'role_utilisateur',
