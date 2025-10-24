@@ -27,4 +27,15 @@ class autorite extends Model
    {
       return $this->hasMany(alert::class);
    }
+
+   public function scopeStatut()
+   {
+      return $this->where('statut',true);
+   }
+
+   public function scopeZone($query,$zone)
+   {
+      return $query->where('zone_responsabilite',$zone);
+   }
+   
 }
