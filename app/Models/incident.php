@@ -19,8 +19,8 @@ class incident extends Model
 
     protected $casts = [
         'date_incident' => 'datetime',
-        'longitide' => 'decimal:8',
-        'latitude' => 'decimal:8',
+        'longitide' => 'decimal:10',
+        'latitude' => 'decimal:10',
     ];
 
     public function utilisateur()
@@ -47,4 +47,11 @@ class incident extends Model
     {
         return $query->where('statut_incident',$satut);
     }
+
+    public function scopePriorite($query,$priorite)
+    {
+        return $query->where('priorite',$priorite);
+    }
+
+
 }
