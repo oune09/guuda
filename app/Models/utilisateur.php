@@ -11,6 +11,7 @@ class utilisateur extends Model
         'nom_utilisateur',
         'prenom_utilisateur',
         'email_utilisateur',
+        'mot_de_passe',
         'cnib',
         'date_naissance_utilisateur',
         'telephone_utilisateur',
