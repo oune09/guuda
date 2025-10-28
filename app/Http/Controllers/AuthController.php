@@ -31,8 +31,8 @@ class AuthController extends Controller
             'organisation'=>'required|string',
             'matricule'=>'required|string|unique:autorites',
             'zone_responsabilite'=>'required|string',
-            'statut'=>'boolean',
-            'utilisateur_id'=>'required/integer|exists:utilisateurs,id',
+            'statut'=>'enum:actif,inactif',
+            'utilisateur_id'=>'required|integer|exists:utilisateurs,id',
             
            ]);
 
@@ -90,6 +90,17 @@ class AuthController extends Controller
     }
 
     
+    public function StatutAutorite(Request $request)
+    {
+        $validation = $request->validate([
+            'statut'=>'required|enum:actif,inactif',
+                    ]);
+
+       Autorite::where('statut', $validation['statut'])->get();
+
+       
+    }
+
     
     
 }
