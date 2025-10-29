@@ -76,31 +76,84 @@ class AuthController extends Controller
             ]);
         }
         
+
         
     }
 
     public function connexion(request $request)
     {
         $validation = $request->validate([
-            'email_utilisateur'=>'requeried|string|email',
-            'mot_de_passe'=>'requeried|string|min:8',
+            'email_utilisateur'=>'required|string|email',
+            'mot_de_passe'=>'required|string|min:8',
         ]);
 
         return response()->json(['message'=>'utilisateur connecte avec succes'],200);
     }
 
-    
-    public function StatutAutorite(Request $request)
+    public function listeAutorite(Request $request)
     {
-        $validation = $request->validate([
-            'statut'=>'required|enum:actif,inactif',
-                    ]);
+        $autorite = autorite::query();
+        if($request->has('staut'))
+        {
+            $autorite->where('statut',$request->statut);
+        }
 
-       Autorite::where('statut', $validation['statut'])->get();
+        if($request->has('organisation'))
+        {
+            $autorite->where('organisation',$request->organisation);
+        }
 
-       
+        if($request->has('zone_reponsabilite'))
+        {
+            $autorite->where('zone_responsabilite',$request->zone_responbilite);
+        }
+
+        return response()->json($autorite->get(),200);
     }
 
-    
+    public function supprimerAutorite($id)
+    {
+        $autorite = autorite::find($id);
+        if(!$autorite)
+        {
+          return response()->json(['message'=>'autorite non trouve'],404);
+        }
+        $autorite->delete();
+        return response()->json(['message'=>'autorite supprime avec succes'],200);
+        
+    }
+ 
+    public function affecterRole(Request $request, $id)
+    {
+        $validation = $request->validate([
+            'role_utilisateur'=>'required|enum:citoyen,autorite,administrateur',
+            'organisation'=>'required_if:role_utilisateur,autorite|string',
+            'matricule'=>'required_if:role_utilisateur,autorite|string|unique:autorites',
+            'zone_responsabilite'=>'required_if:role_utilisateur,autorite|string',
+            'statut'=>'required_if:role_utilisateur,autorite|enum:actif,inactif',
+        ]);
+        
+        $utilisateur =utilisateur::find($id);
+        
+        if(!$utilisateur)
+        {
+            return response()->json(['message'=>'utilisateur non trouve'],404);
+        }
+
+        $utilisateur->role_utilisateur = $validation['role_utilisateur'];
+        $utilisateur->save();
+
+        if($validation['role_utilisateur'] == 'autorite')
+        {
+            autorite::create([
+                'utilisateur_id'=>$utilisateur->id,
+                'organisation'=>$validation['organiastion'],
+                'matricule'=>$validation['matricule'],
+                'zone_responsabilite'=>$validation['zone_responsabilite'],
+                'statut'=>$validation['statut'],
+            ]);
+        }
+        return response()->json(['message'=>'role affecter avec succes'],200);
+    }
     
 }
