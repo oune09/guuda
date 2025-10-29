@@ -50,4 +50,59 @@ class IncidentController extends Controller
         }
     
     }
+
+    public function listeIncident( REquest $request)
+    {
+       $incidents = incident::query();
+       
+       if($request->has('utilisateur_id'))
+        {
+            $incidents->where('utilisateur_id',$request->utilisateur_id);
+        }
+
+        if($request->has('statut_incident'))
+        {
+            $incidents->where('statut_incident',$request->statut_incident);
+        }
+        
+        if($request->has('secteur'))
+        {
+            $incidents->where('secteur',$request->secteur);
+        }
+
+        if($request->has('ville'));
+        {
+            $incidents->where('ville',$resquet->ville);
+        }
+
+        if($request->has('quartier'))
+        {
+            $incidents->where('quartier',$request->quartier);
+        }
+
+        return response()->json($incidents->get(),200);
+    }
+
+    public function supprimerIncident($id)
+    {
+        $incident = incident::find($id);
+        if(!$incident)
+        {
+            return response()->json(['message'=>'incident non trouve'],404);
+        }
+
+        $incident->delete();
+        return response()->json(['message'=>'incident supprimer avec succes'],200);
+    }
+
+    public function detailIncident($id)
+    {
+        $incident = incident::find($id);
+        if(!$incident)
+        {
+            return response()->json(['message'=>'incident non trouve'],404);
+        }
+
+        
+    }
 }
