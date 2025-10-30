@@ -102,6 +102,7 @@ class IncidentController extends Controller
         {
             return response()->json(['message'=>'incident non trouve'],404);
         }
+        
 
         
     }

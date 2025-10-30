@@ -64,7 +64,7 @@ class AuthController extends Controller
         ]);
 
         
-        if($request->role_utilisateur == 'autorite')
+        if($request->role_utilisateur == 'autorite' || $request->role_utilisateur == 'administrateur')
         {
             autorite::create([
                 'utilisateur_id'=>$utilisateur->id,
@@ -154,6 +154,68 @@ class AuthController extends Controller
             ]);
         }
         return response()->json(['message'=>'role affecter avec succes'],200);
+    }
+
+    public function  modifierUtilisateur(Request $request,$id)
+    {   $validation = $reqquest->validate([
+        'nom_utilisateur'=>'required|string',
+        'prenom_utilisateur'=>'required|string',
+        'email_utilisateur'=>'required|string|email',
+        'date_naissance_utilisateur'=>'required|date',
+        'telephone_utilisateur'=>'required|string',
+        'ville'=>'required|string',
+        'secteur'=>'required|string',
+        'quartier'=>'required|string',
+        'photo'=>'nullable|image',
+        'organisation'=>'required_if:role_utilisateur,autorite,administrateur|string',
+        'matricule'=>'required_if:role_utilisateur,autorite,administrateur|string|unique:autorites',
+        'Zone_responsabilite'=>'required_if:role_utilisateur,autorite,administrateur|string',
+        'statut'=>'required_if:role_utilisateur,autorite|enum:actif,inactif',
+
+    ]);
+        $utilisateur = utilisateur::find($id);
+        if(!$utilisateur)
+        {
+            return response()->json(['message'=>'utilisateur non trouve']);
+        }
+        
+        $utilisateur->update([
+         'nom_utilisateur'=>$validation['nom_utilisateur'],
+         'prenom_utilisateur'=>$validation['prenom_utilisateur'],
+         'email_utilisateur'=>$validation['email_utilisateur'],
+         'mot_de_passe'=>bcrypt($validation['mot_de_passe']),
+         'cnib'=>$validation['cnib'],
+         'date_naissance_utilisateur'=>$validation['date_naissance_utilisateur'],
+         'telephone_utilisateur'=>$validation['telephone_utilisateur'],
+         'photo'=>$photo_path,
+         'role_utilisateur'=>$validation['role_utilisateur'],
+         'ville'=>$validation['ville'],
+         'secteur'=>$validation['secteur'],
+         'quartier'=>$validation['quartier'],
+        ]);
+
+        if($request->hasFile('photo'))
+        {
+            $photo_path = $request->file('phote');
+            $utilisateur->phote = $photo_path;
+        }
+
+        if($utilisateur->role_utilisateur == 'autorite' ||$utilisateur->role_utilisateur == 'administrateur')
+        {
+           $autorite = autorite::find($utilisateur->id);
+
+           $autorite->update([
+            'utilisateur_id'=>$utilisateur->id,
+                'organisation'=>$validation['organiastion'],
+                'matricule'=>$validation['matricule'],
+                'zone_responsabilite'=>$validation['zone_responsabilite'],
+                'statut'=>$validation['statut'],
+           ]);
+
+           $autorite->update();
+        }
+        
+       $utilisateur->update();
     }
     
 }
