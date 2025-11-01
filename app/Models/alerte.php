@@ -18,4 +18,11 @@ class alerte extends Model
         'quartier',
         'niveau_alerte',
     ];
+
+    protected $casts = [
+        'date_alerte'=>'datetime',
+        'date_fin'=>'datetime',
+        'longitude'=>'decimal:10',
+        'latitude'=>'decimal:10',
+    ];
 }
