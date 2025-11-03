@@ -45,7 +45,7 @@ class incident extends Model
 
     public function scopeStatut($query,$statut)
     {
-        return $query->where('statut_incident',$satut);
+        return $query->where('statut_incident',$statut);
     }
 
     public function scopePriorite($query,$priorite)

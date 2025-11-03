@@ -26,7 +26,7 @@ class preuve extends Model
 
     public function scopeStatut($query,$statut)
     {
-        return $query->where('statut_preuve',$satut);
+        return $query->where('statut_preuve',$statut);
     }
     
     public function scopeType($query,$type)

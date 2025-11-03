@@ -80,16 +80,20 @@ class AuthController extends Controller
         
     }
 
-    public function connexion(request $request)
+    public function connexion(Request $request)
     {
         $validation = $request->validate([
             'email_utilisateur'=>'required|string|email',
             'mot_de_passe'=>'required|string|min:8',
         ]);
+        $utilisateur = utilisateur::where('email_utilisateur',$validation['email_utilisateur']);
+        if(!$utilisateur || !Hash::check($validation['mot_de_passe']))
+        {
+             return response()->json(['message'=>'identifiant ou mot de passe incorrect',400]);
 
+        }
         return response()->json(['message'=>'utilisateur connecte avec succes'],200);
     }
-
     public function listeAutorite(Request $request)
     {
         $autorite = autorite::query();
@@ -157,7 +161,7 @@ class AuthController extends Controller
     }
 
     public function  modifierUtilisateur(Request $request,$id)
-    {   $validation = $reqquest->validate([
+    {   $validation = $request->validate([
         'nom_utilisateur'=>'required|string',
         'prenom_utilisateur'=>'required|string',
         'email_utilisateur'=>'required|string|email',
@@ -211,11 +215,10 @@ class AuthController extends Controller
                 'zone_responsabilite'=>$validation['zone_responsabilite'],
                 'statut'=>$validation['statut'],
            ]);
-
-           $autorite->update();
         }
         
-       $utilisateur->update();
     }
+
+    
     
 }

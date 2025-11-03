@@ -72,7 +72,7 @@ class IncidentController extends Controller
 
         if($request->has('ville'));
         {
-            $incidents->where('ville',$resquet->ville);
+            $incidents->where('ville',$request->ville);
         }
 
         if($request->has('quartier'))

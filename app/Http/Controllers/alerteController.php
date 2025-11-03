@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class alerteController extends Controller
 {
-    public function creerAlerte(Resquest $request)
+    public function creerAlerte(Request $request)
     {
         $regles = [
             'autorité_id'=>'required|integer|exists:autorites,id',
