@@ -48,7 +48,7 @@ export default function Inscription() {
     }
 
     try {
-      const response = await axios.post("/inscription", data, {
+      const response = await axios.post("/auth/inscription", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setMessage(response.data.message);

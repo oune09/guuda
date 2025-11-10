@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Models\utilisateur;
 
 class AuthController extends Controller
 {
@@ -14,14 +16,15 @@ class AuthController extends Controller
             'prenom_utilisateur'=>'required|string|max:20',
             'email_utilisateur'=>'required|string|email|max:50|unique:utilisateurs',
             'mot_de_passe'=>'required|string|min:8|confirmed',
+            'mot_de_passe_confirmation'=>'required|string|min:8',
             'cnib'=>'required|string|min:8|unique:utilisateurs',
             'date_naissance_utilisateur'=>'required|date',
             'telephone_utilisateur'=>'required|string|min:8|unique:utilisateurs',
             'photo'=>'nullable|image',
-            'role_utilisateur'=>'required|enum:citoyen,autorite,administrateur',
+            'role_utilisateur'=>'required|in:citoyen,autorite,administrateur',
             'ville'=>'required|string',
             'secteur'=>'required|string',
-            'quartier'=>'required|string',
+            'quartier'=>'required|string|max:50',
 
         ];
         
@@ -31,7 +34,7 @@ class AuthController extends Controller
             'organisation'=>'required|string',
             'matricule'=>'required|string|unique:autorites',
             'zone_responsabilite'=>'required|string',
-            'statut'=>'enum:actif,inactif',
+            'statut'=>'in:actif,inactif',
             'utilisateur_id'=>'required|integer|exists:utilisateurs,id',
             
            ]);
@@ -50,7 +53,7 @@ class AuthController extends Controller
          'nom_utilisateur'=>$validation['nom_utilisateur'],
          'prenom_utilisateur'=>$validation['prenom_utilisateur'],
          'email_utilisateur'=>$validation['email_utilisateur'],
-         'mot_de_passe'=>bcrypt($validation['mot_de_passe']),
+         'mot_de_passe_utilisateur'=>bcrypt($validation['mot_de_passe']),
          'cnib'=>$validation['cnib'],
          'date_naissance_utilisateur'=>$validation['date_naissance_utilisateur'],
          'telephone_utilisateur'=>$validation['telephone_utilisateur'],
@@ -85,12 +88,19 @@ class AuthController extends Controller
             'mot_de_passe'=>'required|string|min:8',
         ]);
         $utilisateur = utilisateur::where('email_utilisateur',$validation['email_utilisateur'])->first();
-        if(!$utilisateur || !Hash::check($validation['mot_de_passe'],$utilisateur->mot_de_passe))
+        if(!$utilisateur || !Hash::check($validation['mot_de_passe'],$utilisateur->mot_de_passe_utilisateur))
         {
              return response()->json(['message'=>'identifiant ou mot de passe incorrect',400]);
 
         }
-        return response()->json(['message'=>'utilisateur connecte avec succes'],200);
+        $token = $utilisateur->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Connexion réussie',
+        'token' => $token,
+        'role' => $utilisateur->role_utilisateur, // renvoyer le rôle
+        'utilisateur' => $utilisateur,
+    ]);
     }
     public function listeAutorite(Request $request)
     {
