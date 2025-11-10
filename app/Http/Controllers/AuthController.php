@@ -16,7 +16,7 @@ class AuthController extends Controller
             'mot_de_passe'=>'required|string|min:8|confirmed',
             'cnib'=>'required|string|min:8|unique:utilisateurs',
             'date_naissance_utilisateur'=>'required|date',
-            'telephone_utilisateur'=>'required|string|min:8|unique:utilisteurs',
+            'telephone_utilisateur'=>'required|string|min:8|unique:utilisateurs',
             'photo'=>'nullable|image',
             'role_utilisateur'=>'required|enum:citoyen,autorite,administrateur',
             'ville'=>'required|string',
@@ -27,7 +27,7 @@ class AuthController extends Controller
         
         if($request->role_utilisateur == 'autorite')
         {
-           $regles->array_merge($regles,[
+           $regles=array_merge($regles,[
             'organisation'=>'required|string',
             'matricule'=>'required|string|unique:autorites',
             'zone_responsabilite'=>'required|string',
@@ -37,8 +37,6 @@ class AuthController extends Controller
            ]);
 
         }
-
-        return response()->json(['message'=>'utilisateur inscrit avec succes'],201);
         
         $photo_path = null;
         if($request->hasFile('photo'))
@@ -76,7 +74,7 @@ class AuthController extends Controller
             ]);
         }
         
-
+        return response()->json(['message'=>'utilisateur inscrit avec succes'],201);
         
     }
 
@@ -86,8 +84,8 @@ class AuthController extends Controller
             'email_utilisateur'=>'required|string|email',
             'mot_de_passe'=>'required|string|min:8',
         ]);
-        $utilisateur = utilisateur::where('email_utilisateur',$validation['email_utilisateur']);
-        if(!$utilisateur || !Hash::check($validation['mot_de_passe']))
+        $utilisateur = utilisateur::where('email_utilisateur',$validation['email_utilisateur'])->first();
+        if(!$utilisateur || !Hash::check($validation['mot_de_passe'],$utilisateur->mot_de_passe))
         {
              return response()->json(['message'=>'identifiant ou mot de passe incorrect',400]);
 
@@ -111,7 +109,7 @@ class AuthController extends Controller
         {
             $autorite->where('zone_responsabilite',$request->zone_responbilite);
         }
-
+        $token = $utilisateur->createToken('auth_token')->plainTextToken;
         return response()->json($autorite->get(),200);
     }
 

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string('nom_utilisateur');
-            $table->string('premon_utilisateur');
+            $table->string('prenom_utilisateur');
             $table->string('email_utilisateur')->unique();
             $table->string('cnib');
             $table->string('mot_de_passe_utilisateur');

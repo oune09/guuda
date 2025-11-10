@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\controllers\AuthController;
 use App\Http\controllers\incidentController;
+use App\Http\controllers\alerteController;
 
 Route::prefix('auth')->group(function(){
     Route::post('/inscription',[AuthController::class,'inscription']);
@@ -22,5 +23,9 @@ Route::prefix('alerte')->group(function(){
     Route::post('/creerAlerte',[alerteController::class,'creerAlerte']);
     Route::post('/listeAlerte',[alerteController::class,'listeAlerte']);
     Route::put('/modifierAlerte',[alerteController::class,'modifierAlerte']);
-    Rooute::delete('/supprimerAlerte',[alerteController::class,'supprimerAlerte']);
+    Route::delete('/supprimerAlerte',[alerteController::class,'supprimerAlerte']);
 });
+
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '.*');

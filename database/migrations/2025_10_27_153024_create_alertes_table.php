@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('autorite_id')->constrained('autorites')->onDelete('cascade');
             $table->foreignId('incident_id')->constrained('incidents')->ondelete('cascade')->nullble();
-            $table-enum('niveau_alerte',['info','avertissement','urgence'])->default('info');
+            $table->enum('niveau_alerte',['info','avertissement','urgence'])->default('info');
             $table->text('message_alerte');
             $table->boolean('lu')->default('false');
             $table->datetime('date_alerte');
