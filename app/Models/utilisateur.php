@@ -21,9 +21,8 @@ class utilisateur extends Model
         'telephone_utilisateur',
         'photo',
         'role_utilisateur',
-        'ville',
-        'secteur',
-        'quartier',
+        'ville_id',
+        'secteur_id',
 
     ];
 
@@ -42,7 +41,7 @@ class utilisateur extends Model
 
     public function autorite()
     {
-        return this->hasOne(Autorite::class);
+        return $this->hasOne(Autorite::class);
     }
 
     public function incident()

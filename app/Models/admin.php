@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class autorite extends Model
+class admin extends Model
 {
-   protected $fillable = [
+     protected $fillable = [
     'utilisateur_id ',
     'organisation',
     'matricule',
@@ -22,9 +22,9 @@ class autorite extends Model
       return $this->hasMany(incident::class);
    }
    
-   public function autorites()
+   public function secteurs() 
    {
-    return $this->belongsToMany(Autorite::class, 'autorite_secteur');
+    return $this->belongsToMany(Secteur::class, 'admin_secteur');
    }
 
    public function alert()
@@ -37,9 +37,4 @@ class autorite extends Model
       return $this->where('statut',true);
    }
 
-   public function scopeZone($query,$zone)
-   {
-      return $query->where('zone_responsabilite',$zone);
-   }
-   
 }

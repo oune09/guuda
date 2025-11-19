@@ -22,10 +22,9 @@ return new class extends Migration
             $table->date('date_naissance_utilisateur');
             $table->string('telephone_utilisateur')->unique();
             $table->string('photo')->nullable(); 
-            $table->enum('role_utilisateur',['citoyen','autorite','administrateur'])->default('citoyen');
-            $table->string('ville');
-            $table->string('secteur');
-            $table->string('quartier');
+            $table->enum('role_utilisateur',['citoyen','autorite','administrateur','superadministreteur'])->default('citoyen');
+            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
+            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
 
         });
     }

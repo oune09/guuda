@@ -1,6 +1,6 @@
 import React ,{useState} from 'react';
 import axios from 'axios';
-export default function connexion(){
+export default function Connexion(){
     const [email, setEmail] = useState('');
     const [mot_de_passe, setMot_de_passe] = useState('');
     const [message, setMessage] = useState('');
@@ -16,15 +16,17 @@ export default function connexion(){
 
       setMessage(response.data.message);
       console.log("Réponse du serveur :", response.data);
-       const role = response.data.role;
+      const role = response.data.role;
       if (role === 'citoyen') {
-        window.location.href = '/dashboard-citoyen';
+        window.location.href = '/citoyen';
       } else if (role === 'autorite') {
-        window.location.href = '/dashboard-autorite';
+        window.location.href = '/autorite';
       } else if (role === 'administrateur') {
-        window.location.href = '/dashboard-admin';
+        window.location.href = '/admin';
       }
-    } catch (error) {
+      
+    } 
+    catch (error) {
       if (error.response) {
         setMessage(error.response.data.message);
       } else {

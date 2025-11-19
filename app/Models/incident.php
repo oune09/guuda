@@ -12,7 +12,7 @@ class incident extends Model
         'description_incident',
         'priorite',
         'statut_incident',
-        'quatier',
+        'quartier',
         'secteur',
         'ville',
     ];
@@ -26,6 +26,21 @@ class incident extends Model
     public function utilisateur()
     {
         return $this->belongsTo(utilisateur::class);
+    }
+    
+    public function incident() 
+    {
+    return $this->belongsTo(Incident::class);
+    }
+
+    public function secteur()
+    {
+        return $this->belongsTo(Secteur::class);
+    }
+
+    public function organisation()
+    {
+        return $this->belongsTo(Organisation::class);
     }
 
     public function preuves()

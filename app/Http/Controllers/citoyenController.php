@@ -7,8 +7,48 @@ use App\Models\Incident;
 use App\Models\Preuve;
 use App\Models\Autorite;
 
-class IncidentController extends Controller
+class citoyenController extends Controller
 {
+     public function  modifierUtilisateur(Request $request,$id)
+    {   $validation = $request->validate([
+        'nom_utilisateur'=>'required|string',
+        'prenom_utilisateur'=>'required|string',
+        'email_utilisateur'=>'required|string|email',
+        'date_naissance_utilisateur'=>'required|date',
+        'telephone_utilisateur'=>'required|string',
+        'ville_id'=>'required|string',
+        'secteur_id'=>'required|string',
+        'photo'=>'nullable|image',
+        'matricule'=>'required_if:role_utilisateur,autorite,administrateur|string|unique:autorites',
+        'statut'=>'required_if:role_utilisateur,autorite|enum:actif,inactif',
+
+    ]);
+        $utilisateur = utilisateur::find($id);
+        if(!$utilisateur)
+        {
+            return response()->json(['message'=>'utilisateur non trouve']);
+        }
+        
+        $utilisateur->update([
+         'nom_utilisateur'=>$validation['nom_utilisateur'],
+         'prenom_utilisateur'=>$validation['prenom_utilisateur'],
+         'email_utilisateur'=>$validation['email_utilisateur'],
+         'mot_de_passe'=>bcrypt($validation['mot_de_passe']),
+         'cnib'=>$validation['cnib'],
+         'date_naissance_utilisateur'=>$validation['date_naissance_utilisateur'],
+         'telephone_utilisateur'=>$validation['telephone_utilisateur'],
+         'photo'=>$photo_path,
+         'ville_id'=>$validation['ville_id'],
+         'secteur_id'=>$validation['secteur_id'],
+        ]);
+
+        if($request->hasFile('photo'))
+        {
+            $photo_path = $request->file('phote');
+            $utilisateur->phote = $photo_path;
+        }
+        
+    }
     public function creeIncident(Request $request)
     {
         $regles = [
@@ -98,6 +138,5 @@ class IncidentController extends Controller
         $incident->delete();
         return response()->json(['message'=>'incident supprimer avec succes'],200);
     }
-
 
 }

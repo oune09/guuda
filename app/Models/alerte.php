@@ -25,4 +25,10 @@ class alerte extends Model
         'longitude'=>'decimal:10',
         'latitude'=>'decimal:10',
     ];
+
+    public function autorite() 
+    {
+    return $this->belongsTo(Autorite::class);
+    }
+    
 }
