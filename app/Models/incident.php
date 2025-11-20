@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\secteur;
+use App\Models\preuve;
+
+
 use Illuminate\Database\Eloquent\Model;
 
 class incident extends Model
@@ -12,9 +16,8 @@ class incident extends Model
         'description_incident',
         'priorite',
         'statut_incident',
-        'quartier',
-        'secteur',
-        'ville',
+        'secteur_id',
+        'ville_id',
     ];
 
     protected $casts = [

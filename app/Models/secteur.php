@@ -1,5 +1,10 @@
 <?php
-namespace App\Model;
+namespace App\Models;
+use App\Models\ville;
+use App\Models\admin;
+use App\Models\autorite;
+use App\Models\incident;
+use App\Models\alerte;
 
 use Illuminate\Database\Eloquent\Model;
 

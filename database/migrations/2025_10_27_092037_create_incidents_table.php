@@ -20,7 +20,8 @@ return new class extends Migration
             $table->datetime('date_incident');
             $table->enum('priorite',['faible','moyenne','elevee'])->default('moyenne');
             $table->enum('statut_incident',['ouvert','en_cours','resolu','ferme'])->default('ouvert');
-            $table->foreignId('secteur')->constrained('utilisateurs')->onDelete('cascade');
+            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
+            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
             $table->decimal('longitude', 10 , 8);
             $table->decimal('latitude',10,8);
 

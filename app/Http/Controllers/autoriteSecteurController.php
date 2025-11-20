@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Model\secteur as ModelSecteur;
+use App\Models\autorite;
+use App\Models\secteur;
+
 use Illuminate\Http\Request;
 
 class autoriteSecteurController extends Controller

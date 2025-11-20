@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\adminController;
 use Illuminate\Support\Facades\Route;
 use App\Http\controllers\AuthController;
 use App\Http\controllers\incidentController;
 use App\Http\controllers\alerteController;
 use App\Http\controllers\secteurController;
 use App\Http\controllers\autoriteSecteurController;
+use App\Http\Controllers\citoyenController;
+use App\Http\Controllers\superAdminController;
 
 Route::prefix('auth')->group(function(){
     Route::post('/inscription',[AuthController::class,'inscription']);
@@ -15,7 +18,7 @@ Route::prefix('auth')->group(function(){
 });
 
 Route::prefix('citoyen')->group(function(){
-    Route::post('/creeIcident',[citoyentController::class,'creeIcident']);
+    Route::post('/creeIcident',[citoyenController::class,'creeIcident']);
     Route::post('/ListeIncident',[citoyenController::class,'listeIncident']);
     Route::put('/modifierIncident',[citoyenController::class,'modifierIncident']);
     Route::delete('/SupprimerIncident',[citoyenController::class,'supprimerIncident']);

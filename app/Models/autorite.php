@@ -29,7 +29,7 @@ class autorite extends Model
 
    public function alert()
    {
-      return $this->hasMany(alert::class);
+      return $this->hasMany(alerte::class);
    }
 
    public function scopeStatut()

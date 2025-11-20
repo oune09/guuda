@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Models;
+use App\Models\secteur;
+use App\Models\ville;
 
 use Illuminate\Database\Eloquent\Model;
 

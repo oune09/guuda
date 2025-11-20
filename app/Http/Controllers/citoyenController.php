@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Incident;
 use App\Models\Preuve;
 use App\Models\Autorite;
+use App\Models\utilisateur;
 
 class citoyenController extends Controller
 {
@@ -28,7 +29,11 @@ class citoyenController extends Controller
         {
             return response()->json(['message'=>'utilisateur non trouve']);
         }
-        
+        if($request->hasFile('photo'))
+        {
+            $photo_path = $request->file('phote');
+            $utilisateur->phote = $photo_path;
+        }
         $utilisateur->update([
          'nom_utilisateur'=>$validation['nom_utilisateur'],
          'prenom_utilisateur'=>$validation['prenom_utilisateur'],
@@ -37,16 +42,12 @@ class citoyenController extends Controller
          'cnib'=>$validation['cnib'],
          'date_naissance_utilisateur'=>$validation['date_naissance_utilisateur'],
          'telephone_utilisateur'=>$validation['telephone_utilisateur'],
-         'photo'=>$photo_path,
+         'photo'=> $photo_path,
          'ville_id'=>$validation['ville_id'],
          'secteur_id'=>$validation['secteur_id'],
         ]);
 
-        if($request->hasFile('photo'))
-        {
-            $photo_path = $request->file('phote');
-            $utilisateur->phote = $photo_path;
-        }
+        return response()->json(['message'=>'utilisateur modifie avec succes'],200);
         
     }
     public function creeIncident(Request $request)

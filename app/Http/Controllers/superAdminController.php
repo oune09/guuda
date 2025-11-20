@@ -3,20 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Admin;
+use App\Models\admin ;
 use App\Models\ville;
-use App\Models\secteur;
-use App\Models\utilidateur;
-use App\Models\autorite;
-use App\Models\unite;
+use App\Models\secteur ;
+use App\Models\utilisateur ;
+use App\Models\autorite ;
+use App\Models\unite ;
 use App\Models\organisation;
 
 class superAdminController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->middleware('superadmin');
+       // $this->middleware('auth:sanctum');
+       // $this->middleware('superadmin');
     }
     public function creerSecteur(Request $request)
   {
@@ -26,12 +26,12 @@ class superAdminController extends Controller
     'superAdmin_id'=>'required|integer|exists:superAdmin,id',
    ];
 
-   $validation = $request->validate($regle);
-   
-     if (Secteur::where('nom_secteur', $validation['nom_secteur'])
-                ->where('ville_id', $validation['ville_id'])->exists()) {
-            return response()->json(['message' => 'Ce secteur existe déjà dans cette ville'], 400);
-        }
+     $validation = $request->validate($regle);
+
+    if (Secteur::where('nom_secteur', $validation['nom_secteur'])
+          ->where('ville_id', $validation['ville_id'])->exists()) {
+      return response()->json(['message' => 'Ce secteur existe déjà dans cette ville'], 400);
+    }
 
    $secteur = Secteur::create([
     'nom_secteur'=>$validation['nom_secteur'],
@@ -47,26 +47,33 @@ class superAdminController extends Controller
     
     if(!$secteur)
     {
-        return response()->json(['message'=>'secteur non trouve',200]);
+      return response()->json(['message'=>'secteur non trouve'],200);
     }
     $secteur->delete();
-    return response()->json(['message'=>'secteur supprimer avec succes',200]);
+    return response()->json(['message'=>'secteur supprimer avec succes'],200);
   }
 
-  public function modifierSecteur($id)
+  public function modifierSecteur(Request $request,$id)
   {
     $secteur = Secteur::find($id);
+
     if(!$secteur)
     {
-        return response()->json(['message'=>'secteur non trouve',200]);
+      return response()->json(['message'=>'secteur non trouve'],200);
     }
     
+    $regle=[
+      'nom_secteur'=>'required|string',
+      'ville_id'=>'required|integer|exists:ville,id',
+      'superadmin_id'=>'required|integer|exists:superadmin,id',
+    ];
+    $validation = $request->validate($regle);
     $secteur->update([
        'nom_secteur'=>$validation['nom_secteur'],
        'ville_id'=>$validation['ville_id'],
        'superAdmin_id'=>$validation['superAdmin_id'],
     ]);
-    return respone()->json(['message'=>'secteur modifier avec succes']);
+    return response()->json(['message'=>'secteur modifier avec succes'],200);
   }
 
    public function listeSecteur(Request $request)
@@ -83,10 +90,10 @@ class superAdminController extends Controller
    ];
 
    $validation = $request->validate($regle);
-    if (Organisation::where('nom_organisatio', $validation['nom_organisation']))
-       {
-            return response()->json(['message' => 'Ce secteur existe déjà dans cette ville'], 400);
-       }
+    if (Organisation::where('nom_organisation', $validation['nom_organisation'])->exists())
+    {
+      return response()->json(['message' => 'Cette organisation existe déjà'], 400);
+    }
    $organisation = Organisation::create([
     'nom_organisation'=>$validation['nom_organisation'],
     'superAdmin_id'=>$validation['superAdmin_id'],
@@ -100,25 +107,29 @@ class superAdminController extends Controller
     
     if(!$organisation)
     {
-        return response()->json(['message'=>'organisation non trouve',200]);
+      return response()->json(['message'=>'organisation non trouve'],200);
     }
     $organisation->delete();
-    return response()->json(['message'=>'organisation supprimer avec succes',200]);
+    return response()->json(['message'=>'organisation supprimer avec succes'],200);
   }
 
-  public function modifierOrganisation($id)
+  public function modifierOrganisation(Request $request,$id)
   {
     $organisation = Organisation::find($id);
     if(!$organisation)
     {
-        return response()->json(['message'=>'organisation non trouve',200]);
+      return response()->json(['message'=>'organisation non trouve'],200);
     }
-    
+    $regle=[
+      'nom_organisation'=>'required|string',
+      'superadmin_id'=>'required|integer|exists:superadmin,id',
+    ];
+    $validation = $request->validate($regle);
     $organisation->update([
       'nom_organisation'=>$validation['nom_organisation'],
       'superAdmin_id'=>$validation['superAdmin_id'],
     ]);
-    return respone()->json(['message'=>'organisation modifier avec succes']);
+    return response()->json(['message'=>'organisation modifier avec succes']);
   } 
   
   public function listeOrganisation(Request $request)
@@ -149,25 +160,31 @@ class superAdminController extends Controller
     
     if(!$ville)
     {
-        return response()->json(['message'=>'ville non trouve',200]);
+      return response()->json(['message'=>'ville non trouve'],200);
     }
     $ville->delete();
-    return response()->json(['message'=>'ville supprimer avec succes',200]);
+    return response()->json(['message'=>'ville supprimer avec succes'],200);
   }
 
-  public function modifierVille($id)
+  public function modifierVille(Request $request, $id)
   {
+    $regle=[
+      'nom_ville'=>'required|string',
+      'superadmin_id'=>'required|integer|exists:superadmin,id',
+    ];
+    $validation = $request->validate($regle);
+
     $ville = Ville::find($id);
     if(!$ville)
     {
-        return response()->json(['message'=>'ville non trouve',200]);
+      return response()->json(['message'=>'ville non trouve'],200);
     }
     
     $ville->update([
-      'nom_ville'=>$validation['nom_ville'],
-      'superAdmin_id'=>$validation['superAdmin_id'],
+      'nom_ville'=> $validation['nom_ville'],
+      'superAdmin_id'=> $validation['superAdmin_id'],
     ]);
-    return respone()->json(['message'=>'ville modifier avec succes']);
+    return response()->json(['message'=>'ville modifier avec succes'],200);
   } 
   
   public function listeVille(Request $request)
@@ -188,10 +205,10 @@ class superAdminController extends Controller
     $autorite = Autorite::findOrFail($id);
     $utilisateur = $autorite->utilisateur;
 
-    if($autorite->role_utilisateur !== 'autorite')
-    {
-       return response()->json(['message'=>'utilisateur n est pas une autorite',200]);
-    }
+     if($autorite->role_utilisateur !== 'autorite')
+     {
+       return response()->json(['message'=>'utilisateur n est pas une autorite'],400);
+     }
      $organisation = $autorite->organisation_id;
      $matricule = $autorite->matricule;
      
@@ -223,12 +240,12 @@ class superAdminController extends Controller
 
     $validation = $request->validate($regle);
     $citoyen = Utilisateur::findOrFail($id);
-    $utilisateur = $autorite->utilisateur;
+    $utilisateur = $citoyen->utilisateur;
 
-    if($citoyen->role_utilisateur !== 'citoyen')
-    {
-       return response()->json(['message'=>'utilisateur n est pas un citoyen',200]);
-    }
+     if($citoyen->role_utilisateur !== 'citoyen')
+     {
+       return response()->json(['message'=>'utilisateur n est pas un citoyen'],400);
+     }
      
      Autorite::create([
                 'utilisateur_id'=>$utilisateur->id,

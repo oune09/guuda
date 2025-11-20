@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\secteur;
 use Illuminate\Database\Eloquent\Model;
 
 class admin extends Model
@@ -24,12 +25,12 @@ class admin extends Model
    
    public function secteurs() 
    {
-    return $this->belongsToMany(Secteur::class, 'admin_secteur');
+    return $this->belongsToMany(secteur::class, 'admin_secteur');
    }
 
    public function alert()
    {
-      return $this->hasMany(alert::class);
+      return $this->hasMany(alerte::class);
    }
 
    public function scopeStatut()
