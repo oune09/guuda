@@ -34,4 +34,10 @@ class autoriteController extends Controller
 
         $incident->update(['statut_incident'=>'terminee']);
     }
+
+    public function detailAutorite(Request $request)
+    {
+        $autorite = $request->user()->autorite;
+        return response()->json($autorite);
+    }
 }

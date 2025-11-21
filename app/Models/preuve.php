@@ -24,6 +24,11 @@ class preuve extends Model
         return $this->belongsTo(incident::class);
     }
 
+    public function alerte()
+    {
+        return $this->belongsTo(alerte::class);
+    }
+
     public function scopeStatut($query,$statut)
     {
         return $query->where('statut_preuve',$statut);

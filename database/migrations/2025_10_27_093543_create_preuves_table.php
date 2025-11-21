@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('preuves', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignId('incident_id')->constrained('incidents')->onDelete('cascade');
+            $table->foreignId('incident_id')->constrained('incidents')->onDelete('cascade')->nullable(false);
+            $table->foreignId('alerte_id')->constreined('alertes')->onDelete('cascade')->nullable(false);
             $table->string('nom_preuve');
             $table->string('type_preuve');
             $table->string('lien_preuve');

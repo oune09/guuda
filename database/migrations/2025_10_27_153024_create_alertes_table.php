@@ -18,15 +18,14 @@ return new class extends Migration
             $table->foreignId('incident_id')->constrained('incidents')->ondelete('cascade')->nullble();
             $table->enum('niveau_alerte',['info','avertissement','urgence'])->default('info');
             $table->text('message_alerte');
-            $table->boolean('lu')->default('false');
             $table->datetime('date_alerte');
             $table->datetime('date_fin')->nullable();
             $table->enum('statut_alerte',['active','terminee'])->default('active');
-            $table->string('ville');
-            $table->string('secteur');
-            $table->string('quartier');
-            $table->string('longitude');
-            $table->string('latitude');
+            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
+            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
+             $table->foreignId('unites_id')->constrained('unites')->onDelete('cascade');
+            $table->string('longitude')->nullable();
+            $table->string('latitude')->nullable();
         });
     }
 

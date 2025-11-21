@@ -1,15 +1,23 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Notifications;
+use App\Models\autorite;
+use APp\Models\preuve;
+use App\Models\incident;
+use App\Models\alerte;
+use App\Models\utilisateur;
+use App\Notifications\alerteNotification;
+use Illuminate\Container\Attributes\Log;
 use Illuminate\Http\Request;
+use function Pest\Laravel\get;
 
 class adminController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->middleware('admin'); 
+       // $this->middleware('auth:sanctum');
+       // $this->middleware('admin'); 
     }
 
     public function listeAutorite(Request $request)
@@ -23,10 +31,10 @@ class adminController extends Controller
         return response()->json($autorites);
     }
 
-    public function comfirmerSignalement(Request $request,$incidentId)
+    public function confirmerSignalement(Request $request,$id)
     {
         $admin = $request->user()->admin;
-        $incident = Incident::findOrFail($IncidentId);
+        $incident = Incident::findOrFail($id);
 
         if($incident->unite_id !== $admin->unite_id || $incident->organisation_id !== $admin->organisation_id)
         {
@@ -43,12 +51,22 @@ class adminController extends Controller
                               ->get();
 
         foreach ($autorites as $autorite) {
-            $autorite->utilisateur->notify(new \App\Notifications\IncidentNotification($incident));
+            $autorite->utilisateur->notify(new \App\Notifications\IncidenttNotification($incident));
         }
 
         return response()->json(['message' => 'Signalement confirmé et autorité notifiée']);
     }
+     public function listeIncident(Request $request)
+    {
+        
+        $admin = $request->user()->admin; 
+        $incidents = Incident::where('unite_id', $admin->unite_id)
+                              ->where('organisation_id', $admin->organisation_id)
+                              ->with('utilisateur')
+                              ->get();
 
+        return response()->json($incidents);
+    }
     public function creerAlerte(Request $request)
     {
         $regles = [
@@ -82,11 +100,28 @@ class adminController extends Controller
             'longitude'=>$validation['longitude'],
             'latitude'=>$validation['latitude'],
         ]);
+         if($request->hasFile('preuve'))
+        {
+            foreach($request->file('preuve') as $fichier)
+            {
+                $lien_preuve = $fichier->store('preuve_alerte','public');
+
+                preuve::create([
+                    'incident_id'=>$alerte->id,
+                    'nom_preuve'=>$fichier->getClientOriginalName(),
+                    'type_preuve'=>$fichier->getClientMimeType(),
+                    'lien_preuve'=>$lien_preuve,
+                    'description_preuve'=>$request->description_alerte,
+                    'statut_preuve'=>'valide',
+                ]);
+            }
+        }
 
        $utilisateur = utilisateur::where('role_utilisateur','citoyen')
-                             ->where('ville',$alerte->ville)
-                             ->where('secteur',$alerte->secteur)
-                             ->where('quartier',$alerte->quartier)
+                             ->where('secteur_id',$alerte->secteur_id)
+                             ->wherehas('unite.secteur',function($query) use ($alerte){
+                                $query->where('secteur.id',$alerte->secteur_id);
+                             })
                              ->get();
 
         $notificationsEnvoyees = 0;
@@ -116,7 +151,7 @@ class adminController extends Controller
 
         if(!$alerte)
         {
-            return response->json(['message'=>'alerte introuvable'],404);
+            return response()->json(['message'=>'alerte introuvable'],404);
         }
 
         $regles = [
@@ -175,7 +210,7 @@ class adminController extends Controller
         ], 201);
     }
 
-    public function listeAlerte(Request $request)
+    public function rechercheAlerte(Request $request)
     {
         $alertes = alerte::query();
 
@@ -204,7 +239,7 @@ class adminController extends Controller
             $alertes->where('secteur_id',$request->secteur_id);
         }
 
-        return response()->json($query->get());
+        return response()->json($alertes);
     }
 
     public function supprimerAlerte(Request $request, $id)
@@ -219,4 +254,35 @@ class adminController extends Controller
         $alerte->delete();
         return response()->json(['message'=>'alerte supprimer'],200);
     }
+
+    public function listeAlerte(Request $request)
+    {
+        $alertes = alerte::all();
+        return response()->json($alertes);
+    }
+
+    public function alerteDetail(Request $request,$id)
+    {
+        $alerte = alerte::find($id);
+
+        if(!$alerte)
+        {
+            return response()->json(['message'=>'alerte non trouve'],404);
+        }
+
+        return response()->json($alerte);
+    }
+
+    public function adminAlerte(Request $request,$id)
+    {
+        $admin = $request->user()->admin;
+        $alerte = alerte::where('unite_id',$admin->unite_id)
+                         ->where('organisation_id',$admin->organisation_id)
+                         ->get();
+        
+        return response()->json($alerte);
+    }
+
+    
+
 }

@@ -35,6 +35,11 @@ class secteur extends Model
         return $this->hasMany(Incident::class);
     }
 
+    public function unite()
+    {
+        return $this->belongsTo(unite::class, 'unitite_secteur','secteur_id','unite_id');
+    }
+
     public function alerte()
     {
         return $this->hasMany(alerte::class);

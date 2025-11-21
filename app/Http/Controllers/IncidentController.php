@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Incident;
 use App\Models\Preuve;
+use App\Models\admin;
 use App\Models\Autorite;
+use App\Models\utilisateur;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class IncidentController extends Controller
 {
@@ -51,6 +55,33 @@ class IncidentController extends Controller
                 ]);
             }
         }
+        $utilisateur = utilisateur::where('role_utilisateur','administrateur')
+                             ->where('organisation_id',$incident->organnisation__id)
+                             ->where('unite_id',$incident->unite__id)
+                             ->wherehas('unite.secteur',function($query) use ($incident){
+                                $query->where('secteur.id',$incident->secteur_id);
+                             })
+                             ->get();
+
+        $notificationsEnvoyees = 0;
+        foreach($utilisateur as $utilisateur){
+            try {
+                $utilisateur->notify(new Notification($incident));
+                $notificationsEnvoyees++;
+                Log::info("Notification in-app envoyée à l'utilisateur {$utilisateur->id} pour l'alerte {$incident->id}");
+            } catch (\Exception $e) {
+                Log::error("Erreur notification pour {$utilisateur->email}: " . $e->getMessage());
+            }
+        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Alerte créée avec succès',
+            'data' => $incident->load('autorite', 'incident'),
+            'statistiques' => [
+                'citoyens_notifies' => $notificationsEnvoyees,
+                'zone' => "{$incident->ville_id} - {$incident->secteur} - {$incident->quartier}"
+            ]
+        ], 201);
         
     
     }
@@ -98,6 +129,17 @@ class IncidentController extends Controller
         $incident->delete();
         return response()->json(['message'=>'incident supprimer avec succes'],200);
     }
+    public function adminIncident(Request $request,$id)
+    {
+        $admin = $request->user($id);
+        $incident = incident::where('unite_id',$admin->unite_id)
+                         ->where('organisation_id',$admin->organisation_id)
+                         ->get();
+        
+        return response()->json($incident);
+    }
+
+
 
 
 }

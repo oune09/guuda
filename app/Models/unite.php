@@ -24,7 +24,7 @@ class unite extends Model
 
     public function secteur()
     {
-        return $this->belongsToMany(secteur::class, 'unite_secteur');
+        return $this->belongsToMany(secteur::class, 'unite_secteur','unite_id','secteur_id');
     }
 
     public function autorite()
