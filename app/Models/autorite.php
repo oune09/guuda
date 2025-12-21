@@ -12,34 +12,24 @@ class autorite extends Model
     'matricule',
     'statut',
    ];
+public function utilisateur()
+    {
+        return $this->belongsTo(Utilisateur::class);
+    }
 
-   protected $casts = [
-    'statut' => 'boolean',
-   ];
+    public function organisation()
+    {
+        return $this->belongsTo(Organisation::class);
+    }
 
-   public function incident()
-   {
-      return $this->hasMany(incident::class);
-   }
-   
-   public function autorites()
-   {
-    return $this->belongsToMany(Autorite::class, 'autorite_secteur');
-   }
+    public function unite()
+    {
+        return $this->belongsTo(Unite::class);
+    }
 
-   public function alert()
-   {
-      return $this->hasMany(alerte::class);
-   }
-
-   public function scopeStatut()
-   {
-      return $this->where('statut',true);
-   }
-
-   public function scopeZone($query,$zone)
-   {
-      return $query->where('zone_responsabilite',$zone);
-   }
+    public function incidentsAssignes()
+    {
+        return $this->hasMany(Incident::class, 'autorite_id');
+    }
    
 }

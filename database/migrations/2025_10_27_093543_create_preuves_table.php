@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignId('incident_id')->constrained('incidents')->onDelete('cascade')->nullable(false);
-            $table->foreignId('alerte_id')->constreined('alertes')->onDelete('cascade')->nullable(false);
+            $table->foreignId('alerte_id')->constrained('alertes')->onDelete('cascade')->nullable(false);
             $table->string('nom_preuve');
             $table->string('type_preuve');
             $table->string('lien_preuve');
             $table->text('description_preuve')->nullable();
-            $table->enum('statut_preuve',['valide','invalide','en_entente'])->default('en_entente');
+            $table->enum('statut_preuve',['valide','invalide','en_attente'])->default('en_attente');
         
         });
     }

@@ -1,5 +1,6 @@
 import React, {useState,useEffect} from "react";
-import axios from "qxios";
+import axios from "axios";
+import Header from "../header";
 
 export default function incident()
 {
@@ -45,7 +46,8 @@ export default function incident()
     }
 
     return(
-        <div className="p-6">  
+        <div className="p-6"> 
+         <Header /> 
             <h2 className="text-2xl font-bold mb-4">Gestion des Incidents</h2>
             {message && <div className="mb-4 p-2 bg-green-100 text-green-700">{message}</div> }
             <table className="w-full border-collapse border">

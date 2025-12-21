@@ -18,12 +18,15 @@ export default function Connexion(){
       console.log("Réponse du serveur :", response.data);
       const role = response.data.role;
       if (role === 'citoyen') {
-        window.location.href = '/citoyen';
+        window.location.href = '/utilisateur/dashbord';
       } else if (role === 'autorite') {
         window.location.href = '/autorite';
       } else if (role === 'administrateur') {
         window.location.href = '/admin';
+      } else if (role === 'superadmin') {
+        window.location.href = '/superadmin/dashboardStatique';
       }
+      
       
     } 
     catch (error) {

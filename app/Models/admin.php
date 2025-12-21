@@ -5,37 +5,57 @@ namespace App\Models;
 use App\Models\secteur;
 use Illuminate\Database\Eloquent\Model;
 
-class admin extends Model
+class Admin extends Model
 {
-     protected $fillable = [
-    'utilisateur_id ',
-    'organisation',
-    'matricule',
-    'statut',
-   ];
+    protected $fillable = [
+        'utilisateur_id',
+        'organisation_id',
+        'unite_id',
+        'matricule',
+    ];
 
-   protected $casts = [
-    'statut' => 'boolean',
-   ];
+    protected $casts = [
+        'statut' => 'boolean',
+    ];
 
-   public function incident()
-   {
-      return $this->hasMany(incident::class);
-   }
-   
-   public function secteurs() 
-   {
-    return $this->belongsToMany(secteur::class, 'admin_secteur');
-   }
+    // Relations
+    public function utilisateur()
+    {
+        return $this->belongsTo(Utilisateur::class);
+    }
 
-   public function alert()
-   {
-      return $this->hasMany(alerte::class);
-   }
+    public function admin()
+    {
+    return $this->belongsTo(Admin::class, 'admin_id');
+    }
 
-   public function scopeStatut()
-   {
-      return $this->where('statut',true);
-   }
 
+    public function unite()
+    {
+        return $this->belongsTo(Unite::class);
+    }
+
+    public function organisation()
+    {
+        return $this->belongsTo(Organisation::class);
+    }
+
+    public function incident()
+    {
+        return $this->hasMany(Incident::class);
+    }
+
+    public function alert()
+    {
+        return $this->hasMany(Alerte::class);
+    }
+
+    // Scope
+    public function scopeStatut($query)
+    {
+        return $query->where('statut', true);
+    }
 }
+
+
+

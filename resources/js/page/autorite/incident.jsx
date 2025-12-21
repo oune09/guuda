@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from "react";
 import axios from "axios";
+import Header from "../header";
 
 export default function Autorite()
 {
@@ -37,6 +38,7 @@ export default function Autorite()
 
     return(
         <div>
+             <Header />
             <h2>Autorite</h2>
             {message && <div className="mb-4 p-2 bg-green-100 text-green-700">{message}</div> }
             <table className="w-full border-collapse border">

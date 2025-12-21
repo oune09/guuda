@@ -4,6 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+use function Laravel\Prompts\table;
+
 return new class extends Migration
 {
     /**
@@ -15,13 +17,17 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
-            $table->string('type_incident');
+            $table->foreignId('organisation_id')->constrained('organisations')->onDelete('cascade');
+            $table->foreignId('unite_id')->constrained('unite')->onDelete('cascade');
+            $table->foreignId('autorite_id')->nullable()->constrained('autorites');
+            $table->string('titre_incident');
             $table->text('description_incident');
             $table->datetime('date_incident');
-            $table->enum('priorite',['faible','moyenne','elevee'])->default('moyenne');
-            $table->enum('statut_incident',['ouvert','en_cours','resolu','ferme'])->default('ouvert');
-            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
-            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
+            $table->dateTime('date_charge')->nullable();
+            $table->dateTime('date_resolution')->nullable();
+            $table->enum('gravite',['faible','moyenne','elevee','critique'])->default('moyenne');
+            $table->enum('statut_incident',['ouvert','en_cours','resolu','annulee'])->default('ouvert');
+            $table->text('adresse');
             $table->decimal('longitude', 10 , 8);
             $table->decimal('latitude',10,8);
 

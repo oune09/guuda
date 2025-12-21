@@ -81,7 +81,7 @@ export default function Header({user, onLogout}){
 
       {open && (
         <div className="profil1">
-          <Link to="/profil" className="link-profil">Profil</Link>
+          <Link to="/utilisateur/modifier" className="link-profil">Modifier</Link>
           <button
             className="button-deconnexion"
             onClick={deconnexion}
@@ -89,8 +89,9 @@ export default function Header({user, onLogout}){
           >
             {isLoggingOut ? 'Déconnexion...' : 'Déconnexion'}
           </button>
+          
         </div>
       )}
-    </header>
+    </header> 
   );
 }

@@ -1,41 +1,39 @@
 <?php
 
 namespace App\Models;
-use App\Models\secteur;
-use App\Models\ville;
 
 use Illuminate\Database\Eloquent\Model;
 
-class superAdmin extends Model
+class SuperAdmin extends Model
 {
-      protected $fillable = [
-    'utilisateur_id ',
-    'organisation',
-    'matricule',
-    'statut',
-   ];
+    protected $table = 'super_admins'; // Spécifier le nom de la table
 
-   protected $casts = [
-    'statut' => 'boolean',
-   ];
+    protected $fillable = [
+        'utilisateur_id',
+        'matricule',
+        'statut',
+    ];
 
-   public function secteur()
-   {
-      return $this->hasMany(Secteur::class);
-   }
+    protected $casts = [
+        'statut' => 'boolean',
+    ];
+
+    public function utilisateur()
+    {
+        return $this->belongsTo(Utilisateur::class, 'utilisateur_id');
+    }
+
+    
+    
    
-   public function ville()
-   {
-     return $this->hasMany(Ville::class);
-   }
-   public function organisation()
-   {
-     return $this->hasMany(Organisation::class);
-   }
-   
-   public function scopeStatut()
-   {
-      return $this->where('statut',true);
-   }
 
+    public function organisations()
+    {
+        return $this->hasMany(Organisation::class, 'superAdmin_id');
+    }
+    
+    public function scopeActif($query)
+    {
+        return $query->where('statut', true);
+    }
 }

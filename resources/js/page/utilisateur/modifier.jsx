@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Header from "../header";
 
-export default function Inscription() {
+export default function Modifier() {
   const [formData, setFormData] = useState({
     nom_utilisateur: "",
     prenom_utilisateur: "",
@@ -12,6 +13,13 @@ export default function Inscription() {
     date_naissance_utilisateur: "",
     telephone_utilisateur: "",
     role_utilisateur: "citoyen",
+    ville: "",
+    secteur: "",
+    quartier: "",
+    organisation: "",
+    matricule: "",
+    zone_responsabilite: "",
+    statut: "actif",
   });
 
   const [photo, setPhoto] = useState(null);
@@ -41,7 +49,7 @@ export default function Inscription() {
     }
 
     try {
-      const response = await api.post("inscription", data, {
+      const response = await axios.post("/citoyen/modifierUtilisateur", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setMessage(response.data.message);
@@ -57,7 +65,8 @@ export default function Inscription() {
 
   return (
     <div className="p-10 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Inscription</h1>
+        <Header />
+      <h1 className="text-2xl font-bold mb-4">Modification</h1>
 
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <input type="text" name="nom_utilisateur" placeholder="Nom" value={formData.nom_utilisateur} onChange={handleChange}/><br />
@@ -68,8 +77,11 @@ export default function Inscription() {
         <input type="text" name="cnib" placeholder="CNIB" value={formData.cnib} onChange={handleChange}/><br />
         <input type="date" name="date_naissance_utilisateur" value={formData.date_naissance_utilisateur} onChange={handleChange} /><br />
         <input type="text" name="telephone_utilisateur" placeholder="Téléphone" value={formData.telephone_utilisateur} onChange={handleChange} /><br />
+        <input type="text" name="quartier" placeholder="quartier" value={formData.quartier} onChange={handleChange}/><br />
+        <input type="text" name="ville" placeholder="ville" value={formData.ville} onChange={handleChange}/><br />
+        <input type="text" name="secteur" placeholder="secteur" value={formData.secteur} onChange={handleChange}/><br />
         <input type="file" name="photo" onChange={handlePhoto}/><br />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">S'inscrire</button>
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Modifier</button>
       </form>
         {message && <p className="mt-4 text-center text-red-500">{message}</p>}
     </div>

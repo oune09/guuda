@@ -5,13 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\user as  Authenticatable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Hash;
 
 
-class utilisateur extends Model
+
+class Utilisateur extends Authenticatable
 { 
     use HasApiTokens, HasFactory;
-    protected  $fillable = [
+
+    protected $table = 'utilisateurs'; // Spécifier le nom de la table
+
+    protected $fillable = [
         'nom_utilisateur',
         'prenom_utilisateur',
         'email_utilisateur',
@@ -21,24 +27,21 @@ class utilisateur extends Model
         'telephone_utilisateur',
         'photo',
         'role_utilisateur',
-        'ville_id',
-        'secteur_id',
-
-    ];
-
-    protected $hidden = [
-        'mot_de_passe_utilisateur',
-        'remenber_token',
         
     ];
 
-    protected $casts = [
-        'email_verified_at' =>'datetime',
-        'date_naissance_utilisateur' => 'date',
-
+     protected $hidden = [
+         'mot_de_passe_utilisateur',
+         'remember_token',
     ];
 
 
+    protected $casts = [
+         'latitude' => 'float',
+        'longitude' => 'float',
+    ];
+
+    // Relations
     public function autorite()
     {
         return $this->hasOne(Autorite::class);
@@ -46,38 +49,53 @@ class utilisateur extends Model
 
     public function incident()
     {
-    return $this->hasMany(Incident::class);
+        return $this->hasMany(Incident::class);
     }
-     
-    public function scopeCitoyens($query)
-    {
-        return $query->where('role_utilisateur','citoyen');
-    }
-
-    public function scopeAurotites($query)
-     {
-        return $query->where('role_utilisateur','autorite');
-     }
-
-     public function scopeAdministrateures($query)
-     {
-        return $query->where('role_utilisateur','administrateur');
-     }
+    
     
 
-     public function citoyen()
-     {
-        return $this->role === 'citoyen';
-     }
+    public function admin()
+    {
+        return $this->hasOne(Admin::class);
+    }
 
-     public function aurorite()
-     {
-        return $this->role === 'autorite';
-     }
+    public function superAdmin()
+    {
+        return $this->hasOne(SuperAdmin::class);
+    }
 
-     public function administrateur()
-     {
-        return $this->role ==='administrateur';
-     }
+    public function incidentsSignales()
+    {
+        return $this->hasMany(Incident::class, 'citoyen_id');
+    }
+
+    // Méthodes helpers
+    public function estCitoyen()
+    {
+        return $this->role_utilisateur === 'citoyen';
+    }
+
+    public function estAutorite()
+    {
+        return $this->role_utilisateur === 'autorite';
+    }
+
+    public function estAdministrateur()
+    {
+        return $this->role_utilisateur === 'administrateur';
+    }
+
+    public function estSuperAdministrateur()
+    {
+        return $this->role_utilisateur === 'superadministrateur';
+    }
+
+    protected function motDePasseUtilisateur(): Attribute
+{
+    return Attribute::make(
+        set: fn ($value) => Hash::make($value)
+    );
+}
+
 
 }

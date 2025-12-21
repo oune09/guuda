@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from "react";
 import axios from "axios";
+import Header from "../header";
 
 export default function Unite(){
     const [unites, setUnites] = useState([]);
@@ -59,6 +60,7 @@ export default function Unite(){
 
     return(
         <div className="p-6">
+           <Header />
       <h1 className="text-2xl font-bold mb-4">Gestion des Unites</h1>
 
       {message && <div className="mb-4 p-2 bg-green-100 text-green-700">{message}</div>}
@@ -84,6 +86,7 @@ export default function Unite(){
           <tr className="bg-gray-200">
             <th className="border p-2">ID</th>
             <th className="border p-2">Nom de l'unite</th>
+            <th className="border p-2">ville</th>
             <th className="border p-2">Actions</th>
           </tr>
         </thead>
@@ -98,6 +101,12 @@ export default function Unite(){
                   className="bg-yellow-500 text-white p-1 rounded"
                 >
                   Modifier
+                </button>
+                <button
+                  onClick={() => modifierUnite(unite)}
+                  className="bg-yellow-500 text-white p-1 rounded"
+                >
+                Details
                 </button>
                 <button
                   onClick={() => supprimerUnite(unite.id)}

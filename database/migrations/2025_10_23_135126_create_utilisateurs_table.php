@@ -11,20 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('utilisateurs', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-            $table->string('nom_utilisateur');
-            $table->string('prenom_utilisateur');
-            $table->string('email_utilisateur')->unique();
-            $table->string('cnib');
-            $table->string('mot_de_passe_utilisateur');
-            $table->date('date_naissance_utilisateur');
-            $table->string('telephone_utilisateur')->unique();
-            $table->string('photo')->nullable(); 
-            $table->enum('role_utilisateur',['citoyen','autorite','administrateur','superadministreteur'])->default('citoyen');
-            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
-            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
+         Schema::create('utilisateurs', function (Blueprint $table) {
+        $table->id();
+        $table->string('nom_utilisateur');
+        $table->string('prenom_utilisateur');
+        $table->string('email_utilisateur')->unique();
+        $table->string('mot_de_passe_utilisateur');
+        $table->string('cnib')->unique();
+        $table->date('date_naissance_utilisateur');
+        $table->string('telephone_utilisateur')->unique();
+        $table->string('photo')->nullable();
+        $table->decimal('latitude', 10, 7)->nullable();
+        $table->decimal('longitude', 10, 7)->nullable();
+        $table->enum('role_utilisateur', ['citoyen', 'autorite', 'administrateur', 'superadministrateur'])->default('citoyen');
+        $table->rememberToken();
+        $table->timestamps();
 
         });
     }

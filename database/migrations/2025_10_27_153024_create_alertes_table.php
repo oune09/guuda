@@ -14,18 +14,17 @@ return new class extends Migration
         Schema::create('alertes', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-            $table->foreignId('autorite_id')->constrained('autorites')->onDelete('cascade');
-            $table->foreignId('incident_id')->constrained('incidents')->ondelete('cascade')->nullble();
+            $table->foreignId('admin_id')->constrained('admins')->onDelete('cascade');
             $table->enum('niveau_alerte',['info','avertissement','urgence'])->default('info');
+            $table->string('titre_alerte');
             $table->text('message_alerte');
             $table->datetime('date_alerte');
             $table->datetime('date_fin')->nullable();
             $table->enum('statut_alerte',['active','terminee'])->default('active');
-            $table->foreignId('ville_id')->constrained('villes')->onDelete('cascade');
-            $table->foreignId('secteur_id')->constrained('secteurs')->onDelete('cascade');
-             $table->foreignId('unites_id')->constrained('unites')->onDelete('cascade');
+            $table->foreignId('unite_id')->constrained('unites')->onDelete('cascade');
             $table->string('longitude')->nullable();
             $table->string('latitude')->nullable();
+            $table->decimal('rayon_km',5,2)->default('5.00');
         });
     }
 

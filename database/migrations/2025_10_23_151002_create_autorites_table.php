@@ -17,8 +17,9 @@ return new class extends Migration
             $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
             $table->foreignId('organisation_id')->constrained('organisations')->OnDelete('cascade');
             $table->string('matricule');
-            $table->foreignId('unite_id')->constrained('unites')->onDelete('cascade')->unique();
+            $table->foreignId('unite_id')->constrained('unites')->onDelete('cascade');
             $table->boolean('statut')->default(true);
+            $table->unique(['utilisateur_id','unite_id']);
         });
     }
 

@@ -1,5 +1,6 @@
 import React,{useState,useEffect} from "react";
 import axios from "axios";
+import Header from "../header";
 
 export default function Alerte()
 {
@@ -56,6 +57,7 @@ export default function Alerte()
     }
     return(
         <div>
+             <Header />
             <h1>Gestion des Alertes</h1>
              {message && <div className="mb-4 p-2 bg-green-100 text-green-700">{message}</div> }
             <table className="w-full border-collapse border">

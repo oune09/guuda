@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import Header from "../header";
 
 export default function Ville() {
   const [nom, setNom] = useState("");
@@ -18,6 +19,7 @@ export default function Ville() {
 
   return (
     <div className="p-6 shadow rounded bg-white w-full max-w-md mx-auto mt-6">
+       <Header />
       <h2 className="text-xl font-semibold mb-4">Créer une Ville</h2>
       {message && <div className="mb-3 p-2 bg-gray-100 rounded">{message}</div>}
       <form onSubmit={handleSubmit} className="space-y-3">

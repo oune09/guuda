@@ -5,42 +5,72 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class unite extends Model
-{
-    protected $fillable =[
-        'nom',
+{protected $fillable = [
+        'nom_unite',
         'organisation_id',
-        'ville_id',
+        'adresse',
+        'longitude',
+        'latitude',
+        'telephone_unite',
+        'mail_unite',
+        'capacite_unite',
+        'rayon_intervention',
     ];
 
+    protected $casts = [
+        'longitude' => 'decimal:8',
+        'latitude' => 'decimal:8',
+        'rayon_intervention_km' => 'decimal:2'
+    ];
+
+    // Relations
     public function organisation()
     {
-        return $this->belongsTo(organisation::class);
+        return $this->belongsTo(Organisation::class);
     }
 
-    public function ville()
+    public function autorites()
     {
-        return $this->belongsTo(Ville::class);
+        return $this->hasMany(Autorite::class);
     }
 
-    public function secteur()
+    public function admin()
     {
-        return $this->belongsToMany(secteur::class, 'unite_secteur','unite_id','secteur_id');
+        return $this->hasOne(Admin::class);
     }
 
-    public function autorite()
+    public function alertes()
     {
-        return $this->hasMAny(Autorite::class);
-    }
-
-     public function couvreSecteur(int $secteurId): bool
-    {
-        return $this->secteurs()->where('secteurs.id', $secteurId)->exists();
+        return $this->hasMany(Alerte::class);
     }
 
     
-    public function scopeForOrganisationAndSecteur($query, $organisationId, $secteurId)
+    public function responsable()
     {
-        return $query->where('organisation_id', $organisationId)
-                     ->whereHas('secteurs', fn($q) => $q->where('secteurs.id', $secteurId));
+        return $this->admin ? $this->admin->utilisateur : null;
+    }
+
+    public function nombreAgents()
+    {
+        return $this->autorites()->where('statut', true)->count();
+    }
+
+    public function capaciteDisponible()
+    {
+        return $this->capacite_max - $this->nombreAgents();
+    }
+
+    public function estPleine()
+    {
+        return $this->capacite_max && $this->nombreAgents() >= $this->capacite_max;
+    }
+
+    
+    public function scopeProchesDe($query, $latitude, $longitude, $rayonKm = 10)
+    {
+        return $query->whereRaw(
+            "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?",
+            [$longitude, $latitude, $rayonKm * 1000]
+        );
     }
 }

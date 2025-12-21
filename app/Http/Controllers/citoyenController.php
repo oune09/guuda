@@ -5,139 +5,186 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Incident;
 use App\Models\Preuve;
-use App\Models\Autorite;
-use App\Models\utilisateur;
+use App\Models\Utilisateur;
+use App\Models\Alerte;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
-class citoyenController extends Controller
+class CitoyenController extends Controller
 {
-     public function  modifierUtilisateur(Request $request,$id)
-    {   $validation = $request->validate([
-        'nom_utilisateur'=>'required|string',
-        'prenom_utilisateur'=>'required|string',
-        'email_utilisateur'=>'required|string|email',
-        'date_naissance_utilisateur'=>'required|date',
-        'telephone_utilisateur'=>'required|string',
-        'ville_id'=>'required|string',
-        'secteur_id'=>'required|string',
-        'photo'=>'nullable|image',
-        'matricule'=>'required_if:role_utilisateur,autorite,administrateur|string|unique:autorites',
-        'statut'=>'required_if:role_utilisateur,autorite|enum:actif,inactif',
-
-    ]);
-        $utilisateur = utilisateur::find($id);
-        if(!$utilisateur)
-        {
-            return response()->json(['message'=>'utilisateur non trouve']);
-        }
-        if($request->hasFile('photo'))
-        {
-            $photo_path = $request->file('phote');
-            $utilisateur->phote = $photo_path;
-        }
-        $utilisateur->update([
-         'nom_utilisateur'=>$validation['nom_utilisateur'],
-         'prenom_utilisateur'=>$validation['prenom_utilisateur'],
-         'email_utilisateur'=>$validation['email_utilisateur'],
-         'mot_de_passe'=>bcrypt($validation['mot_de_passe']),
-         'cnib'=>$validation['cnib'],
-         'date_naissance_utilisateur'=>$validation['date_naissance_utilisateur'],
-         'telephone_utilisateur'=>$validation['telephone_utilisateur'],
-         'photo'=> $photo_path,
-         'ville_id'=>$validation['ville_id'],
-         'secteur_id'=>$validation['secteur_id'],
-        ]);
-
-        return response()->json(['message'=>'utilisateur modifie avec succes'],200);
-        
-    }
-    public function creeIncident(Request $request)
+    public function __construct()
     {
+        // $this->middleware('auth:sanctum');
+        // $this->middleware('role:citoyen');
+    }
+
+    // ==================== GESTION DU PROFIL ====================
+
+    public function modifierProfil(Request $request)
+    {
+        $utilisateur = $request->user();
+
         $regles = [
-            'utilisateur_id'=>'required|integer|exists:utilisateurs,id',
-            'type_incident'=>'required|string',
-            'description_incident'=>'required|string',
-            'priorite'=>'required|string|enum:faible,moyenne,elevee',
-            'statut_incident'=>'required|string|enum:ouvert,ferme,en_cours',
-            'quartier'=>'required|string',
-            'secteur'=>'required|string',
-            'ville'=>'required|string',
+            'nom_utilisateur' => 'sometimes|string|max:50',
+            'prenom_utilisateur' => 'sometimes|string|max:50',
+            'telephone_utilisateur' => 'sometimes|string|min:8|max:20|unique:utilisateurs,telephone_utilisateur,' . $utilisateur->id,
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
 
         $validation = $request->validate($regles);
 
-        $incident = incident::create([
-            'utilisateur_id'=>$validation['utilisateur_id'],
-            'type_incident'=>$validation['type_incident'],
-            'description_incident'=>$validation['description_incident'],
-            'priorite'=>$validation['priorite'],
-            'statut_incident'=>$validation['statut_incident'],
-            'quartier'=>$validation['quartier'],
-            'secteur'=>$validation['secteur'],
-            'ville'=>$validation['ville'],
-        ]);
-
-        if($request->hasFile('preuve'))
-        {
-            foreach($request->file('preuve') as $fichier)
-            {
-                $lien_preuve = $fichier->store('preuve_incident','public');
-
-                preuve::create([
-                    'incident_id'=>$incident->id,
-                    'nom_preuve'=>$fichier->getClientOriginalName(),
-                    'type_preuve'=>$fichier->getClientMimeType(),
-                    'lien_preuve'=>$lien_preuve,
-                    'description_preuve'=>$request->description_preuve,
-                    'statut_preuve'=>'valide',
-                ]);
+        DB::beginTransaction();
+        try {
+            if ($request->hasFile('photo')) {
+                if ($utilisateur->photo) {
+                    Storage::disk('public')->delete($utilisateur->photo);
+                }
+                $validation['photo'] = $request->file('photo')->store('photos_utilisateurs', 'public');
             }
+
+            $utilisateur->update($validation);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Profil modifié avec succès',
+                'utilisateur' => $utilisateur->fresh()
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Erreur lors de la modification du profil'
+            ], 500);
         }
-        
-    
     }
 
-    public function listeIncident( REquest $request)
+    // ==================== GESTION DES INCIDENTS ====================
+
+    public function mesIncidents(Request $request)
     {
-       $incidents = incident::query();
-       
-       if($request->has('utilisateur_id'))
-        {
-            $incidents->where('utilisateur_id',$request->utilisateur_id);
-        }
+        $utilisateur = $request->user();
 
-        if($request->has('statut_incident'))
-        {
-            $incidents->where('statut_incident',$request->statut_incident);
-        }
-        
-        if($request->has('secteur'))
-        {
-            $incidents->where('secteur',$request->secteur);
-        }
+        $incidents = Incident::where('utilisateur_id', $utilisateur->id)
+                           ->with(['preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur'])
+                           ->orderBy('created_at', 'desc')
+                           ->get();
 
-        if($request->has('ville'))
-        {
-            $incidents->where('ville',$request->ville);
-        }
+        return response()->json([
+            'incidents' => $incidents,
+            'total' => $incidents->count()
+        ], 200);
+    }
 
-        if($request->has('quartier'))
-        {
-            $incidents->where('quartier',$request->quartier);
-        }
-        
-        return response()->json($incidents->get(),200);
+    public function detailIncident($id)
+    {
+        $utilisateur = request()->user();
+
+        $incident = Incident::where('id', $id)
+                          ->where('utilisateur_id', $utilisateur->id)
+                          ->with(['preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur', 'alertes'])
+                          ->firstOrFail();
+
+        return response()->json($incident, 200);
     }
 
     public function supprimerIncident($id)
     {
-        $incident = incident::find($id);
-        if(!$incident)
-        {
-            return response()->json(['message'=>'incident non trouve'],404);
-        }
+        $utilisateur = request()->user();
 
-        $incident->delete();
-        return response()->json(['message'=>'incident supprimer avec succes'],200);
+        $incident = Incident::where('id', $id)
+                          ->where('utilisateur_id', $utilisateur->id)
+                          ->where('statut_incident', 'ouvert')
+                          ->firstOrFail();
+
+        DB::beginTransaction();
+        try {
+            foreach ($incident->preuves as $preuve) {
+                Storage::disk('public')->delete($preuve->lien_preuve);
+                $preuve->delete();
+            }
+
+            $incident->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Incident supprimé avec succès'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Erreur lors de la suppression'
+            ], 500);
+        }
     }
 
+    // ==================== ALERTES ET NOTIFICATIONS ====================
+
+    public function mesAlertes(Request $request)
+    {
+        $utilisateur = $request->user();
+
+        if (!$utilisateur->localisation) {
+            return response()->json([
+                'message' => 'Activez votre géolocalisation pour voir les alertes'
+            ], 400);
+        }
+
+        $rayon = $request->rayon_km ?? 5;
+
+        $alertes = Alerte::where('statut_alerte', 'active')
+                       ->whereRaw(
+                           "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?",
+                           [
+                               $utilisateur->localisation->getLng(),
+                               $utilisateur->localisation->getLat(),
+                               $rayon * 1000
+                           ]
+                       )
+                       ->with(['unite.organisation'])
+                       ->orderBy('created_at', 'desc')
+                       ->get();
+
+        return response()->json([
+            'alertes' => $alertes,
+            'rayon_km' => $rayon,
+            'total' => $alertes->count()
+        ], 200);
+    }
+
+    // ==================== STATISTIQUES ====================
+
+    public function mesStatistiques(Request $request)
+    {
+        $utilisateur = $request->user();
+
+        $stats = [
+            'incidents_signales' => Incident::where('utilisateur_id', $utilisateur->id)->count(),
+            'incidents_ouverts' => Incident::where('utilisateur_id', $utilisateur->id)
+                                         ->where('statut_incident', 'ouvert')
+                                         ->count(),
+            'incidents_en_cours' => Incident::where('utilisateur_id', $utilisateur->id)
+                                          ->where('statut_incident', 'en_cours')
+                                          ->count(),
+            'incidents_resolus' => Incident::where('utilisateur_id', $utilisateur->id)
+                                         ->where('statut_incident', 'resolu')
+                                         ->count(),
+        ];
+
+        return response()->json($stats, 200);
+    }
+
+    public function alerte(Request $request)
+    {
+        $alerte = Alerte::all();
+        return response()->json($alerte, 200);
+    }
+
+    public function incident(Request $request)
+    {
+        $incident = Incident::all();
+        return response()->json($incident, 200);
+    }
 }

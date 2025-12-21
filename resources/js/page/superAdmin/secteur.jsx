@@ -1,5 +1,6 @@
 import React,{useState,useEffect}  from "react";
 import axios from "axios";
+import Header from "../header";
 
 export default function Secteur(){
     const [secteurs, setSecteurs] = useState([]);
@@ -59,6 +60,7 @@ export default function Secteur(){
 
     return(
         <div className="p-6">
+           <Header />
       <h1 className="text-2xl font-bold mb-4">Gestion des Secteur</h1>
 
       {message && <div className="mb-4 p-2 bg-green-100 text-green-700">{message}</div>}

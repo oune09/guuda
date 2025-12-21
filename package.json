@@ -16,8 +16,13 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@googlemaps/react-wrapper": "^1.2.0",
+        "@react-google-maps/api": "^2.20.7",
         "@vitejs/plugin-react": "^5.1.0",
+        "chart.js": "^4.5.1",
+        "leaflet": "^1.9.4",
         "react": "^19.2.0",
+        "react-chartjs-2": "^5.3.1",
         "react-dom": "^19.2.0",
         "react-router-dom": "^7.9.6",
         "recharts": "^3.4.1"

@@ -8,7 +8,7 @@ class preuve extends Model
 {
     protected $fillable = [
         'incident_id',
-        'nom_incident',
+        'nom_preuve',
         'type_preuve',
         'lien_preuve',
         'description_preuve',
