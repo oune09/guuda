@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Traits\HasRoles;
 
 
 
 class Utilisateur extends Authenticatable
 { 
-    use HasApiTokens, HasFactory;
+    use HasApiTokens, HasFactory,HasRoles;
 
     protected $table = 'utilisateurs'; // Spécifier le nom de la table
 
@@ -22,11 +23,11 @@ class Utilisateur extends Authenticatable
         'prenom_utilisateur',
         'email_utilisateur',
         'mot_de_passe_utilisateur',
-        'cnib',
-        'date_naissance_utilisateur',
         'telephone_utilisateur',
+        'is_active',
+        'verified_at',
+        'verification_channel',
         'photo',
-        'role_utilisateur',
         
     ];
 
@@ -37,9 +38,13 @@ class Utilisateur extends Authenticatable
 
 
     protected $casts = [
+        'is_active' => 'boolean',
+        'verified_at' => 'datetime',
          'latitude' => 'float',
         'longitude' => 'float',
     ];
+
+    protected $guard_name = 'sanctum';
 
     // Relations
     public function autorite()
@@ -52,50 +57,12 @@ class Utilisateur extends Authenticatable
         return $this->hasMany(Incident::class);
     }
     
-    
-
-    public function admin()
-    {
-        return $this->hasOne(Admin::class);
-    }
-
-    public function superAdmin()
-    {
-        return $this->hasOne(SuperAdmin::class);
-    }
 
     public function incidentsSignales()
     {
         return $this->hasMany(Incident::class, 'citoyen_id');
     }
 
-    // Méthodes helpers
-    public function estCitoyen()
-    {
-        return $this->role_utilisateur === 'citoyen';
-    }
-
-    public function estAutorite()
-    {
-        return $this->role_utilisateur === 'autorite';
-    }
-
-    public function estAdministrateur()
-    {
-        return $this->role_utilisateur === 'administrateur';
-    }
-
-    public function estSuperAdministrateur()
-    {
-        return $this->role_utilisateur === 'superadministrateur';
-    }
-
-    protected function motDePasseUtilisateur(): Attribute
-{
-    return Attribute::make(
-        set: fn ($value) => Hash::make($value)
-    );
-}
-
+    
 
 }

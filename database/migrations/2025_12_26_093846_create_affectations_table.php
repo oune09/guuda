@@ -11,12 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('super_admins', function (Blueprint $table) {
+        Schema::create('affectations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
-            $table->string('matricule');
+            $table->foreignId('unite_id')->constrained('unites')->onDelete('cascade');
+            $table->foreignId('autorite_id')->constrained('autorites')->onDelete('cascade');
             $table->boolean('statut')->default(true);
             $table->timestamps();
+
+            $table->unique(['autorite_id','statut']);
         });
     }
 
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('super_admins');
+        Schema::dropIfExists('affectations');
     }
 };

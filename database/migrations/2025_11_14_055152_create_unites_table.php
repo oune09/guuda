@@ -17,9 +17,8 @@ return new class extends Migration
             $table->foreignId('organisation_id')->constrained('organisations')->onDelete('cascade');
             $table->string('telephone_unite');
             $table->string('mail_unite')->nullable();
-            $table->integer('capacite_unite')->nullable();
-            $table->decimal('rayon_intervention',5,2)->default(10.00);
             $table->text('adresse');
+            $table->boolean('statut')->default(true);
             $table->decimal('longitude',10,8)->nullable();
             $table->decimal('latitude',10,8)->nullable();
             $table->timestamps();

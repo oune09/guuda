@@ -12,6 +12,7 @@ class Organisation extends Model
         'telephone',
         'mail_organisation',
         'adresse_siege',
+        'statut',
         'logo',
     ];
 

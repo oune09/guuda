@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class autorite extends Model
 {
    protected $fillable = [
-    'utilisateur_id ',
-    'organisation',
+    'utilisateur_id',
+    'organisation_id',
+    'unite_id',
     'matricule',
     'statut',
    ];
@@ -27,9 +28,15 @@ public function utilisateur()
         return $this->belongsTo(Unite::class);
     }
 
-    public function incidentsAssignes()
-    {
-        return $this->hasMany(Incident::class, 'autorite_id');
-    }
+   public function affectations()
+{
+    return $this->hasMany(Affectation::class);
+}
+
+public function affectationActive()
+{
+    return $this->hasOne(Affectation::class)->where('statut', true);
+}
+
    
 }

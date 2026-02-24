@@ -1,126 +1,188 @@
 <?php
 
-use App\Http\Controllers\adminController;
 use Illuminate\Support\Facades\Route;
-use App\Http\controllers\AuthController;
-use App\Http\controllers\incidentController;
-use App\Http\controllers\alerteController;
-use App\Http\Controllers\citoyenController;
-use App\Http\Controllers\superAdminController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\AlerteController;
+use App\Http\Controllers\OrganisationController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\UniteController;
+use App\Http\Controllers\UtilisateurController;
+use App\Models\Utilisateur;
+use Dflydev\DotAccessData\Util;
 
-
-// ROUTES PUBLIQUES (sans authentification)
-Route::options('/sanctum/csrf-cookie', function() {
-    return response()->json('OK', 200, [
-        'Access-Control-Allow-Origin' => 'http://localhost:5173',
-        'Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, Accept, X-CSRF-TOKEN',
-        'Access-Control-Allow-Credentials' => 'true',
-    ]);
-});
-
-Route::options('/auth/inscription', function() {
-    return response()->json('OK', 200, [
-        'Access-Control-Allow-Origin' => 'http://localhost:5173',
-        'Access-Control-Allow-Methods' => 'POST, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, Accept',
-        'Access-Control-Allow-Credentials' => 'true',
-    ]);
-});
-
-Route::options('/auth/connexion', function() {
-    return response()->json('OK', 200, [
-        'Access-Control-Allow-Origin' => 'http://localhost:5173',
-        'Access-Control-Allow-Methods' => 'POST, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, Accept',
-        'Access-Control-Allow-Credentials' => 'true',
-    ]);
-});
-
-Route::options('/api/test', function() {
-    return response()->json('OK', 200, [
-        'Access-Control-Allow-Origin' => 'http://localhost:5173',
-        'Access-Control-Allow-Methods' => 'POST, OPTIONS',
-        'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, X-XSRF-TOKEN, Accept',
-        'Access-Control-Allow-Credentials' => 'true',
-    ]);
-});
-
-// ROUTES D'AUTHENTIFICATION (publiques)
-Route::prefix('auth')->group(function(){
+Route::prefix('auth')->group(function () {
     Route::post('/inscription', [AuthController::class, 'inscription']);
     Route::post('/connexion', [AuthController::class, 'connexion']);
-    Route::put('/modifierUtilisateur', [AuthController::class, 'modifierUtilisateur']);
-    Route::delete('/deconnexion', [AuthController::class, 'deconnexion']);
+    Route::post('deconnexion', [AuthController::class, 'deconnexion']);
+    Route::post('/mot-de-passe-oublie', [AuthController::class, 'motDePasseOublie']);
+    Route::post('activation-autorite', [UtilisateurController::class, 'activerCompte']);
+    Route::post('/verification-otp', [AuthController::class, 'verifierOtp']);
+    Route::post('/finaliser-compte', [AuthController::class, 'finaliserCompte']);
 });
 
-// ROUTES SUPERVISEUR (publiques pour l'inscription seulement)
-Route::prefix('superadmin')->group(function () {
-    Route::post('/inscription', [AuthController::class, 'inscriptionSuperAdmin']);
-    Route::put('/modifier/{id}', [AuthController::class, 'modifierSuperAdmin']);
-    Route::get('/liste', [AuthController::class, 'listerSuperAdmins']);
-});
+Route::middleware(['auth:sanctum'])->group(function () {
 
-// ROUTES CITOYEN
-Route::prefix('citoyen')->group(function(){
-    Route::post('/creeIncident', [citoyenController::class, 'creeIncident']);
-    Route::post('/ListeIncident', [citoyenController::class, 'listeIncident']);
-    Route::put('/modifierIncident', [citoyenController::class, 'modifierIncident']);
-    Route::delete('/SupprimerIncident', [citoyenController::class, 'supprimerIncident']);
-    Route::put('/modifierUtilisateur', [citoyenController::class, 'modifierUtilisateur']);
-    Route::delete('/SupprimerUtilisateur', [citoyenController::class, 'supprimerUtilisateur']);
-});
+    Route::prefix('utilisateur')->group(function () {
+        Route::get('/profil', [AuthController::class, 'profil'])
+              ->middleware('permission:user.view.profile');
 
-// ROUTES ADMIN
-Route::prefix('admin')->group(function(){
-    
-   
-    Route::post('/alerteDetail', [adminController::class, 'alerteDetail']);
-    Route::put('/modifierAlerte', [adminController::class, 'modifierAlerte']);
-    Route::post('/dashboardStatistiques', [adminController::class, 'dashboardStatistiques']);
-    Route::post('/statistiquesMensuelles', [adminController::class, 'statistiquesMensuelles']);
-    Route::post('/getCitoyensDansRayon', [adminController::class, 'getCitoyensDansRayon']);
-    Route::post('/detailAutorite', [adminController::class, 'detailAutorite']);
-    Route::delete('/supprimerAlerte', [adminController::class, 'supprimerAlerte']);
-});
-Route::post('/creerUnite', [superAdminController::class, 'creerUnite']);
+        Route::put('/profil', [AuthController::class, 'modifierUtilisateur'])
+            ->middleware('permission:user.update.profile');
 
-// ⚠️ ROUTES PROTÉGÉES (nécessitent authentification)
-Route::middleware(['auth:sanctum'])->group(function(){
-    // Ces routes ne sont accessibles qu'aux superadministrateurs authentifiés
-    Route::post('/creerOrganisation', [superAdminController::class, 'creerOrganisation']);
-    Route::put('/modifierOrganisation/{id}', [superAdminController::class, 'modifierOrganisation']);
-    Route::delete('/supprimerOrganisation/{id}', [superAdminController::class, 'supprimerOrganisation']);
-    Route::get('listeOrganisation', [superAdminController::class, 'listeOrganisation']);
-    Route::post('creerAdmin', [authController::class,'creerAdmin']);
-    Route::post('creerAutorite', [authController::class,'creerAutorite']);
-    Route::put('/modifierUnite', [superAdminController::class, 'modifierUnite']);
-    Route::delete('/supprimerUnite/{id}', [superAdminController::class, 'supprimerUnite']);
-    Route::get('/listeUtilisateur', [superAdminController::class,'listeUtilisateur']);
-    Route::get('/listeUnite', [superAdminController::class, 'listeUnite']);
-    Route::post('/promouvoirEnAutorite/{id}', [superAdminController::class, 'promouvoirEnAutorite']);
-    Route::post('/promouvoirEnAdmin/{id}', [superAdminController::class, 'promouvoirEnAdmin']);
-    Route::post('/retrograderAdmin/{id}', [superAdminController::class, 'retrograderAdmin']);
-    Route::post('/supprimerAutorite/{id}', [superAdminController::class, 'supprimerAutorite']);
-    Route::post('/monUnite', [adminController::class, 'monUnite']);
-    Route::post('/uniteCoordonnee', [AdminController::class,'uniteCoordonnee']);
-    Route::get('/detailUnite/{id}', [superAdminController::class,'detailUnite']);
-    Route::post('/creerSuperAdmin', [superAdminController::class, 'creerSuperAdmin']);
-    Route::get('/listeAdmin', [superAdminController::class,'listeAdmin']);
-    Route::post('/listeAutorite', [superAdminController::class,'listeAutorite']);
-    Route::post('/listeAdminAutorite', [AdminController::class,'listeAutorite']);
-    Route::post('/test', [superAdminController::class, 'creerOrganisation']);
-    Route::post('/admin/creerAlerte', [adminController::class, 'creerAlerte']);
-    Route::post('/incidentsParUnite', [incidentController::class, 'incidentsParUnite']);
-    Route::post('/listeAlerte', [adminController::class, 'listeAlerte']);
-});
+    });
 
-// ROUTES INCIDENT
-Route::prefix('incident')->group(function() {
-    Route::post('/creerincident', [incidentController::class, 'creerincidenet']);
-    Route::post('/incidentsProches', [incidentController::class, 'incidentsProches']);
-    Route::post('/detailIncident', [incidentController::class, 'detailIncident']);
-    Route::post('/trouverOrganisationUniteResponsable', [incidentController::class, 'notifierAdministrateursUnite']);
-    Route::post('/notifierAdministrateursUnite', [incidentController::class, 'creerincidenet']);
-    Route::post('/determinerPriorite', [incidentController::class, 'determinerPriorite']);
+    Route::post('tst', [IncidentController::class, 'creerIncident']);
+
+    Route::prefix('incident')->group(function () {
+
+        
+
+        Route::get('/mes-incidents', [IncidentController::class, 'mesIncidents'])
+            ->middleware('permission:incident.view.own');
+
+        Route::get('/detail/{id}', [IncidentController::class, 'detailIncident'])
+            ->middleware('permission:incident.view.detail');
+
+        Route::put('/traiter/{id}', [IncidentController::class, 'traiterIncident'])
+            ->middleware('permission:incident.update.status');
+
+        Route::delete('/supprimer/{id}', [IncidentController::class, 'supprimerIncident'])
+            ->middleware('permission:incident.delete');
+
+        Route::get('/unite', [IncidentController::class, 'incidentsParUnite'])
+            ->middleware('permission:incident.view.unite');
+
+        Route::get('/incident', [IncidentController::class, 'incidents'])
+            ->middleware('permission:incident.view.all');
+
+        Route::get('/incidentCitoyen/{id}', [IncidentController::class, 'citoyenIncidents'])
+            ->middleware('permission:incident.view.citoyen');
+    });
+
+    Route::prefix('alerte')->group(function () {
+
+        Route::post('/creer', [AlerteController::class, 'creerAlerte'])
+            ->middleware('permission:alerte.create');
+
+        Route::post('/unite', [AlerteController::class, 'alertesParUnite'])
+            ->middleware('permission:alerte.view.unite');
+
+        Route::get('/liste', [AlerteController::class, 'listeAlerte'])
+            ->middleware('permission:alerte.view.all');
+
+        Route::get('/alerte', [AlerteController::class, 'alertes'])
+            ->middleware('permission:alerte.view.all');
+
+        Route::get('/mes-alertes', [AlerteController::class, 'mesAlertes'])
+            ->middleware('permission:alerte.view.own');
+
+        Route::get('/detail/{id}', [AlerteController::class, 'alerteDetail'])
+            ->middleware('permission:alerte.view.detail');
+
+        Route::put('/modifier/{id}', [AlerteController::class, 'modifierAlerte'])
+            ->middleware('permission:alerte.update');
+
+        Route::delete('/supprimer/{id}', [AlerteController::class, 'supprimerAlerte'])
+            ->middleware('permission:alerte.delete');
+    });
+
+    Route::prefix('organisation')->group(function () {
+
+        Route::post('/creer', [OrganisationController::class, 'creerOrganisation'])
+            ->middleware('permission:organisation.create');
+
+        Route::get('/liste', [OrganisationController::class, 'listeOrganisation'])
+            ->middleware('permission:organisation.view');
+
+        Route::put('/modifier/{id}', [OrganisationController::class, 'modifierOrganisation'])
+            ->middleware('permission:organisation.update');
+
+        Route::put('/desactiver/{id}', [OrganisationController::class, 'desactiverOrganisation'])
+            ->middleware('permission:organisation.delete');
+
+        Route::get('/detail/{id}', [OrganisationController::class, 'detailOrganisation'])
+            ->middleware('permission:organisation.view');
+    });
+
+     Route::prefix('unite')->group(function () {
+
+        Route::post('/creer', [UniteController::class, 'creerUnite'])
+            ->middleware('permission:unite.create');
+        
+        Route::put('coordonnes', [UniteController::class, 'uniteCoordonnee'])
+            ->middleware('permission:unite.update');
+
+        Route::get('/liste', [UniteController::class, 'listeUnite'])
+            ->middleware('permission:unite.view');
+
+        Route::get('/detail/{id}', [UniteController::class, 'detailUnite'])
+            ->middleware('permission:unite.view.detail');
+
+        Route::put('/modifier/{id}', [UniteController::class, 'modifierUnite'])
+            ->middleware('permission:unite.update');
+
+        Route::put('/desactiver/{id}', [UniteController::class, 'desactiverUnite'])
+            ->middleware('permission:unite.delete');
+
+       Route::get('/mon-unite', [UniteController::class, 'monUnite'])
+            ->middleware('permission:unite.view.detail');
+    });
+
+    Route::prefix('utilisateurs')->group(function () {
+
+        Route::get('/liste', [UtilisateurController::class, 'listeUtilisateur'])
+            ->middleware('permission:user.view.all');
+
+        Route::post('/creer-autorite', [UtilisateurController::class, 'creerAutorite'])
+            ->middleware('permission:user.create.autorite');
+        
+        Route::put('/modifier/{id}', [UtilisateurController::class, 'modifierUtilisateur'])
+            ->middleware('permission:user.update.profile');
+
+        Route::get('/autorites', [UtilisateurController::class, 'ListeAutorite'])
+            ->middleware('permission:user.view.all');
+        
+        Route::get('/autorite/{id}', [UtilisateurController::class, 'detailAutorite'])
+            ->middleware('permission:user.view.all');
+
+        Route::get('/citoyens', [UtilisateurController::class, 'listeCitoyens'])
+            ->middleware('permission:user.view.all');
+        
+       Route::get('/citoyen/{id}', [UtilisateurController::class, 'detailCitoyen'])
+            ->middleware('permission:user.view.all'); 
+        
+    });
+
+    Route::prefix('roles')->group(function () {
+
+        Route::get('/liste', [RoleController::class, 'index'])
+            ->middleware('permission:role.view');
+
+        Route::post('/creer', [RoleController::class, 'store'])
+            ->middleware('permission:role.create');
+
+        Route::put('/modifier/{id}', [RoleController::class, 'update'])
+            ->middleware('permission:role.update');
+
+        Route::delete('/supprimer/{id}', [RoleController::class, 'destroy'])
+            ->middleware('permission:role.delete,sanctum');
+
+        Route::post('/{id}/permissions', [RoleController::class, 'assignPermissions'])
+            ->middleware('permission:role.assign.permission');
+    });
+
+    Route::prefix('permissions')->group(function () {
+
+        Route::get('/liste', [PermissionController::class, 'index'])
+            ->middleware('permission:permission.view');
+
+        Route::post('/creer', [PermissionController::class, 'store'])
+            ->middleware('permission:permission.create');
+
+        Route::delete('/supprimer/{id}', [PermissionController::class, 'destroy'])
+            ->middleware('permission:permission.delete');
+    });
+
 });

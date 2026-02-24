@@ -5,145 +5,124 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Incident;
 use App\Models\Preuve;
-use App\Models\Admin;
 use App\Models\Autorite;
-use App\Models\Utilisateur;
-use App\Models\Organisation;
 use App\Models\Unite;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Middlewares\PermissionMiddleware;
+use App\Notifications\IncidentNotification; // Notification Spatie
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class IncidentController extends Controller
 {
     public function __construct()
     {
-        // $this->middleware('auth:sanctum');
+        // Middleware pour les permissions Spatie
+       
     }
 
+    // ==================== CREATION ====================
     public function creerIncident(Request $request)
-    {
-        $regles = [
-            'titre_incident' => 'required|string|max:255',
-            'description_incident' => 'required|string',
-            'categorie' => 'required|in:accident,incendie,criminalite,medical,danger,autre',
-            'gravite' => 'required|in:faible,moyenne,elevee,critique',
-            'adresse' => 'required|string',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'preuves' => 'nullable|array',
-            'preuves.*' => 'file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,pdf|max:5120',
-        ];
+{
+    $rules = [
+        'latitude' => 'required|numeric|between:-90,90',
+        'longitude' => 'required|numeric|between:-180,180',
+        'organisation_id' => 'required|integer|exists:organisations,id',
+        'preuves' => 'nullable|array',
+        'preuves.*' => 'file|mimes:jpeg,png,jpg,gif,mp4,mov,avi,pdf|max:5120',
+        'audio' => 'required|file|mimetypes:audio/mpeg,audio/wav,audio/x-wav|max:10240',
+    ];
 
-        $validation = $request->validate($regles);
+    $validated = $request->validate($rules);
+    $latitude = (float) $validated['latitude'];
+    $longitude = (float) $validated['longitude'];
+    DB::beginTransaction();
+    try {
+        $utilisateur = $request->user();
+        $organisationUnite = $this->trouverOrganisationUniteResponsable(
+            $latitude, 
+            $longitude,
+            $validated['organisation_id']
+        );
 
-        DB::beginTransaction();
-        try {
-            $utilisateur = $request->user();
+        $incident = Incident::create([
+            'utilisateur_id' => $utilisateur->id,
+            'organisation_id' => $validated['organisation_id'],
+            'unite_id' => $organisationUnite['unite_id'],
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'date_incident' => now(),
+            'statut_incident' => 'ouvert',
+        ]);
 
-            // Trouver l'organisation et l'unité responsables basées sur la localisation
-            $organisationUnite = $this->trouverOrganisationUniteResponsable(
-                $validation['latitude'], 
-                $validation['longitude']
-            );
+        $audiofichier = $validated['audio'];
+        $audioLien = $audiofichier->store('audios_incidents', 'public');
+        Preuve::create([
+            'incident_id' => $incident->id,
+            'nom_preuve' => $audiofichier->getClientOriginalName(),
+            'type_preuve' => $audiofichier->getMimeType(),
+            'lien_preuve' => $audioLien,
+            'taille_fichier' => $audiofichier->getSize(),
+            'statut_preuve' => 'en_attente',
+        ]);
 
-            $incident = Incident::create([
-                'utilisateur_id' => $utilisateur->id,
-                'organisation_id' => $organisationUnite['organisation_id'],
-                'unite_id' => $organisationUnite['unite_id'],
-                'titre_incident' => $validation['titre_incident'],
-                'description_incident' => $validation['description_incident'],
-                'categorie' => $validation['categorie'],
-                'gravite' => $validation['gravite'],
-                'adresse' => $validation['adresse'],
-                'latitude' => $validation['latitude'],
-                'longitude' => $validation['longitude'],
-                'date_incident' => now(),
-                'priorite' => $this->determinerPriorite($validation['gravite']),
-                'statut_incident' => 'ouvert',
-            ]);
-
-            // Gestion des preuves
-            if ($request->hasFile('preuves')) {
-                foreach ($request->file('preuves') as $fichier) {
-                    $lien_preuve = $fichier->store('preuves_incidents', 'public');
-
-                    Preuve::create([
-                        'incident_id' => $incident->id,
-                        'nom_preuve' => $fichier->getClientOriginalName(),
-                        'type_preuve' => $fichier->getMimeType(),
-                        'lien_preuve' => $lien_preuve,
-                        'taille_fichier' => $fichier->getSize(),
-                        'statut_preuve' => 'en_attente',
-                    ]);
-                }
+        if ($request->hasFile('preuves')) {
+            foreach ($request->file('preuves') as $fichier) {
+                $lien = $fichier->store('preuves_incidents', 'public');
+                Preuve::create([
+                    'incident_id' => $incident->id,
+                    'nom_preuve' => $fichier->getClientOriginalName(),
+                    'type_preuve' => $fichier->getMimeType(),
+                    'lien_preuve' => $lien,
+                    'taille_fichier' => $fichier->getSize(),
+                    'statut_preuve' => 'en_attente',
+                ]);
             }
-
-            // Notifier les administrateurs de l'unité responsable
-            $this->notifierAdministrateursUnite($incident, $organisationUnite['unite_id']);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Incident signalé avec succès',
-                'data' => $incident->load('preuves'),
-                'organisation_responsable' => $organisationUnite['organisation_nom'],
-                'unite_responsable' => $organisationUnite['unite_nom']
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la création de l\'incident',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        // Notification aux autorités avec le rôle admin
+        $this->notifierAutorites($incident, $organisationUnite['unite_id']);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Incident signalé avec succès',
+            'data' => $incident->load('preuves'),
+            'organisation_responsable' => $organisationUnite['organisation_nom'],
+            'unite_responsable' => $organisationUnite['unite_nom']
+        ], 201);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la création de l\'incident',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    // ==================== LISTE & DETAIL ====================
+    public function listeIncident()
+    {
+        $incidents = Incident::with(['utilisateur', 'preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur'])
+                             ->orderBy('created_at', 'desc')
+                             ->get();
+
+        return response()->json($incidents);
     }
 
-    public function listeIncident(Request $request)
+    public function mesIncidents(Request $request)
     {
-        $incidents = Incident::with(['utilisateur', 'preuves', 'organisation', 'unite']);
+        $utilisateur = $request->user();
 
-        // Filtres
-        if ($request->has('utilisateur_id')) {
-            $incidents->where('utilisateur_id', $request->utilisateur_id);
-        }
-
-        if ($request->has('statut_incident')) {
-            $incidents->where('statut_incident', $request->statut_incident);
-        }
-
-        if ($request->has('categorie')) {
-            $incidents->where('categorie', $request->categorie);
-        }
-
-        if ($request->has('gravite')) {
-            $incidents->where('gravite', $request->gravite);
-        }
-
-        if ($request->has('organisation_id')) {
-            $incidents->where('organisation_id', $request->organisation_id);
-        }
-
-        if ($request->has('unite_id')) {
-            $incidents->where('unite_id', $request->unite_id);
-        }
-
-        // Filtre par localisation (rayon)
-        if ($request->has(['latitude', 'longitude', 'rayon_km'])) {
-            $incidents->whereRaw(
-                "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?",
-                [
-                    $request->longitude,
-                    $request->latitude,
-                    $request->rayon_km * 1000
-                ]
-            );
-        }
-
-        $incidents = $incidents->orderBy('created_at', 'desc')->get();
+        $incidents = Incident::where('utilisateur_id', $utilisateur->id)
+                           ->with(['preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur'])
+                           ->orderBy('created_at', 'desc')
+                           ->get();
 
         return response()->json([
             'incidents' => $incidents,
@@ -151,152 +130,172 @@ class IncidentController extends Controller
         ], 200);
     }
 
-    public function incidentsProches(Request $request)
+    public function citoyenIncidents(Request $request)
     {
-        $validation = $request->validate([
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'rayon_km' => 'sometimes|numeric|min:0.1|max:50'
-        ]);
+        $utilisateur = $request->user();
 
-        $rayon = $request->rayon_km ?? 5;
-
-        $incidents = Incident::where('statut_incident', 'valide')
-                           ->whereRaw(
-                               "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?",
-                               [
-                                   $validation['longitude'],
-                                   $validation['latitude'],
-                                   $rayon * 1000
-                               ]
-                           )
-                           ->with(['utilisateur', 'preuves', 'organisation'])
+        $incidents = Incident::where('utilisateur_id', $utilisateur->id)
+                           ->with(['preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur'])
                            ->orderBy('created_at', 'desc')
                            ->get();
 
         return response()->json([
             'incidents' => $incidents,
-            'rayon_km' => $rayon,
             'total' => $incidents->count()
         ], 200);
     }
 
     public function detailIncident($id)
     {
-        $incident = Incident::with([
-            'utilisateur', 
-            'preuves', 
-            'organisation', 
-            'unite',
-            'autoriteAssignee.utilisateur',
-            'alertes'
-        ])->findOrFail($id);
+        $incident = Incident::with(['utilisateur', 'preuves', 'organisation', 'unite', 'autoriteAssignee.utilisateur'])
+                            ->findOrFail($id);
 
-        return response()->json($incident, 200);
+        return response()->json($incident);
     }
 
-    public function supprimerIncident($id)
+    // ==================== ACTIONS ADMINISTRATIVES ====================
+    public function confirmerSignalement($id)
     {
-        $incident = Incident::find($id);
-        
-        if (!$incident) {
-            return response()->json([
-                'message' => 'Incident non trouvé'
-            ], 404);
+        $incident = Incident::findOrFail($id);
+
+        if ($incident->statut_incident !== 'ouvert') {
+            return response()->json(['message' => 'Cet incident a déjà été traité'], 400);
         }
 
-        DB::beginTransaction();
-        try {
-            // Supprimer les preuves associées
-            foreach ($incident->preuves as $preuve) {
-                Storage::disk('public')->delete($preuve->lien_preuve);
-                $preuve->delete();
-            }
+        $incident->update([
+            'statut_incident' => 'en_cours',
+            'date_charge' => now()
+        ]);
 
-            $incident->delete();
+        $this->notifierAutorites($incident, $incident->unite_id);
 
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Incident supprimé avec succès'
-            ], 200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Erreur lors de la suppression de l\'incident',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Signalement confirmé et autorités notifiées',
+            'incident' => $incident
+        ]);
     }
 
-   public function incidentsParUnite(Request $request)
-{  
-    $admin = $request->user()->admin;
+    public function assignerIncident(Request $request, $id)
+    {
+        $request->validate(['autorite_id' => 'required|exists:autorites,id']);
+        $incident = Incident::findOrFail($id);
+        $autorite = Autorite::findOrFail($request->autorite_id);
 
-    $incidents = Incident::where('unite_id', $admin->unite_id)
-                       ->where('organisation_id', $admin->organisation_id)
-                       ->with(['utilisateur', 'preuves'])
-                       ->orderBy('created_at', 'desc')
-                       ->get();
+        $incident->update([
+            'autorite_assignee_id' => $autorite->id,
+            'statut_incident' => 'en_cours',
+            'date_charge' => now()
+        ]);
+
+        try {
+            $autorite->utilisateur->notify(new \App\Notifications\IncidentNotification($incident, 'assignation'));
+        } catch (\Exception $e) {
+            Log::error("Erreur notification assignation: ".$e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Incident assigné avec succès',
+            'incident' => $incident,
+            'autorite' => $autorite
+        ]);
+    }
+
+    public function rejeterIncident(Request $request, $id)
+    {
+        $request->validate(['raison_rejet' => 'required|string']);
+        $incident = Incident::findOrFail($id);
+
+        $incident->update([
+            'statut_incident' => 'annulee',
+            'date_resolution' => now()
+        ]);
+
+        try {
+            $incident->utilisateur->notify(new \App\Notifications\IncidentNotification($incident, 'rejet'));
+        } catch (\Exception $e) {
+            Log::error("Erreur notification rejet: ".$e->getMessage());
+        }
+
+        return response()->json(['message' => 'Incident rejeté avec succès']);
+    }
+    public function traiterIncident(Request $request, $id)
+{
+    $user = $request->user();
+
+    
+    if (!$user->can('incident.traiter')) {
+        abort(403, 'Permission refusée');
+    }
+
+    $autorite = $user->autorite;
+
+    if (!$autorite) {
+        abort(403, 'Utilisateur non autorisé');
+    }
+
+    $incident = Incident::where('id', $id)
+        ->where('autorite_assignee_id', $autorite->id)
+        ->firstOrFail();
+
+    $validation = $request->validate([
+        'statut_incident' => 'required|in:en_cours,resolu,annulee',
+        'notes' => 'nullable|string'
+    ]);
+
+    $incident->update([
+        'statut_incident' => $validation['statut_incident'],
+        'date_resolution' => $validation['statut_incident'] === 'resolu'
+            ? now()
+            : null,
+    ]);
 
     return response()->json([
-        'incidents' => $incidents,
-        'total' => $incidents->count()
-    ], 200);
+        'message' => 'Statut de l’incident mis à jour',
+        'incident' => $incident
+    ]);
+}   
+
+ public function incidents(Request $request)
+ {
+    $icidents = Incident::all();
+    return response()->json($icidents);
+ }
+
+ public function incidentsParUnite(Request $request)
+{  
+    try {
+        $autorite = $request->user()->autorite;
+        $uniteId = $autorite?->unite_id;
+        $organisationId = $request->query('organisation_id');
+
+        if (!$uniteId) {
+            return response()->json(['message' => 'Aucune unité associée'], 403);
+        }
+
+        $incidents = Incident::where('unite_id', $uniteId)
+                           ->when($organisationId, function($query) use ($organisationId) {
+                               return $query->where('organisation_id', $organisationId);
+                           })
+                           ->with(['utilisateur', 'preuves']) // Assurez-vous que ces relations existent dans Incident.php
+                           ->orderBy('created_at', 'desc')
+                           ->get();
+
+        return response()->json([
+            'incidents' => $incidents,
+            'total' => $incidents->count()
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Erreur technique sur le serveur',
+            'error' => $e->getMessage() 
+        ], 500);
+    }
 }
 
 
-    // ==================== MÉTHODES UTILITAIRES PRIVÉES ====================
 
-    private function trouverOrganisationUniteResponsable($latitude, $longitude)
-    {
-        // Trouver l'unité la plus proche pour cet incident
-        $unite = Unite::whereRaw(
-            "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= rayon_intervention_km * 1000",
-            [$longitude, $latitude]
-        )
-        ->where('statut', true)
-        ->orderByRaw(
-            "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) ASC",
-            [$longitude, $latitude]
-        )
-        ->first();
-
-        if (!$unite) {
-            // Fallback: première unité active
-            $unite = Unite::where('statut', true)->first();
-        }
-
-        return [
-            'organisation_id' => $unite->organisation_id,
-            'unite_id' => $unite->id,
-            'organisation_nom' => $unite->organisation->nom_organisation,
-            'unite_nom' => $unite->nom_unite
-        ];
-    }
-
-    private function notifierAdministrateursUnite(Incident $incident, $uniteId)
-    {
-        $admins = Admin::where('unite_id', $uniteId)
-                     ->with('utilisateur')
-                     ->get();
-
-        $notificationsEnvoyees = 0;
-        
-        foreach ($admins as $admin) {
-            try {
-                // $admin->utilisateur->notify(new IncidentNotification($incident));
-                $notificationsEnvoyees++;
-                Log::info("Notification envoyée à l'admin {$admin->utilisateur->id} pour l'incident {$incident->id}");
-            } catch (\Exception $e) {
-                Log::error("Erreur notification pour admin {$admin->utilisateur->email}: " . $e->getMessage());
-            }
-        }
-
-        return $notificationsEnvoyees;
-    }
-
+    // ==================== MÉTHODES PRIVÉES ====================
     private function determinerPriorite($gravite)
     {
         return match($gravite) {
@@ -306,4 +305,65 @@ class IncidentController extends Controller
             default => 'moyenne'
         };
     }
+
+ private function trouverOrganisationUniteResponsable($latitude, $longitude, $organisationId = null)
+{
+    $rayonMetres = 10000; // 10km en mètres
+
+    $query = Unite::whereRaw(
+        "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) <= ?",
+        [$longitude, $latitude, $rayonMetres]
+    )
+    ->where('statut', true);
+
+    // Filtrer par organisation_id si fourni et non nul
+    if ($organisationId) {
+        $query->where('organisation_id', $organisationId);
+    }
+
+    $unite = $query->orderByRaw(
+        "ST_Distance_Sphere(point(longitude, latitude), point(?, ?)) ASC",
+        [$longitude, $latitude]
+    )->first();
+
+    // Si pas d'unité trouvée dans le rayon ET organisation_id fourni
+    // Chercher n'importe quelle unité de cette organisation (même hors rayon)
+    if (!$unite && $organisationId) {
+        $unite = Unite::where('organisation_id', $organisationId)
+                      ->where('statut', true)
+                      ->first();
+    }
+
+    // Si toujours pas d'unité, prendre la première unité disponible
+    if (!$unite) {
+        $unite = Unite::where('statut', true)->first();
+    }
+
+    return [
+        'organisation_id' => $unite->organisation_id,
+        'unite_id' => $unite->id,
+        'organisation_nom' => $unite->organisation->nom_organisation,
+        'unite_nom' => $unite->nom_unite
+    ];
+}
+   private function notifierAutorites($incident, $uniteId)
+{
+    $autorites = Autorite::where('unite_id', $uniteId)
+                         ->where('statut', true)
+                         ->with('utilisateur.roles')
+                         ->get()
+                         ->filter(function($autorite) {
+                             return $autorite->utilisateur->hasPermissionTo('incident.view.unite');
+                         });
+
+    foreach ($autorites as $autorite) {
+        try {
+            $autorite->utilisateur->notify(new \App\Notifications\IncidentNotification($incident));
+            Log::info("Notification envoyée à l'autorité {$autorite->id} pour l'incident {$incident->id}");
+        } catch (\Exception $e) {
+            Log::error("Erreur notification autorité {$autorite->id}: " . $e->getMessage());
+        }
+    }
+}
+
 }

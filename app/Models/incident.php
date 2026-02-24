@@ -14,21 +14,18 @@ class incident extends Model
        'utilisateur_id',
         'organisation_id',
         'autorite_id',
-        'titre_incident',
-        'description_incident',
+        'unite_id',
         'date_incident',
         'date_charge',
         'date_resolution',
-        'priorite',
         'statut_incident',
-        'adresse',
         'longitude',
         'latitude',
-        'categorie',
-        'gravite'
     ];
 
     protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
         'date_incident' => 'datetime',
         'date_charge' => 'datetime',
         'date_resolution' => 'datetime',

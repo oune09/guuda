@@ -12,21 +12,23 @@ return new class extends Migration
     public function up(): void
     {
          Schema::create('utilisateurs', function (Blueprint $table) {
+        //informations de base
         $table->id();
         $table->string('nom_utilisateur');
         $table->string('prenom_utilisateur');
-        $table->string('email_utilisateur')->unique();
-        $table->string('mot_de_passe_utilisateur');
-        $table->string('cnib')->unique();
-        $table->date('date_naissance_utilisateur');
-        $table->string('telephone_utilisateur')->unique();
+        $table->string('email_utilisateur')->nullable()->unique();
+        $table->string('mot_de_passe_utilisateur')->nullable();
+        $table->string('telephone_utilisateur')->nullable()->unique();
         $table->string('photo')->nullable();
+        $table->boolean('is_active')->default(false);
+        $table->timestamp('verified_at')->nullable();
+        $table->enum('verification_channel', ['email', 'phone'])->nullable();
         $table->decimal('latitude', 10, 7)->nullable();
         $table->decimal('longitude', 10, 7)->nullable();
-        $table->enum('role_utilisateur', ['citoyen', 'autorite', 'administrateur', 'superadministrateur'])->default('citoyen');
+        $table->timestamp('email_verified_at')->nullable();
+        $table->timestamp('phone_verified_at')->nullable();
         $table->rememberToken();
         $table->timestamps();
-
         });
     }
 

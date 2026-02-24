@@ -18,18 +18,14 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('utilisateur_id')->constrained('utilisateurs')->onDelete('cascade');
             $table->foreignId('organisation_id')->constrained('organisations')->onDelete('cascade');
-            $table->foreignId('unite_id')->constrained('unite')->onDelete('cascade');
-            $table->foreignId('autorite_id')->nullable()->constrained('autorites');
-            $table->string('titre_incident');
-            $table->text('description_incident');
+            $table->foreignId('unite_id')->constrained('unites')->onDelete('cascade');
+            $table->foreignId('affectation_id')->nullable()->constrained('affectations');
             $table->datetime('date_incident');
             $table->dateTime('date_charge')->nullable();
             $table->dateTime('date_resolution')->nullable();
-            $table->enum('gravite',['faible','moyenne','elevee','critique'])->default('moyenne');
             $table->enum('statut_incident',['ouvert','en_cours','resolu','annulee'])->default('ouvert');
-            $table->text('adresse');
-            $table->decimal('longitude', 10 , 8);
-            $table->decimal('latitude',10,8);
+            $table->decimal('longitude', 13, 10); 
+            $table->decimal('latitude', 12, 10);
 
         });
     }

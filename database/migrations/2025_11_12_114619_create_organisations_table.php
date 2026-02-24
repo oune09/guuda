@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('mail_organisation')->nullable();
             $table->string('logo')->nullable();
+            $table->boolean('statut')->default(true);
             $table->timestamps();
         });
     }

@@ -13,14 +13,12 @@ class unite extends Model
         'latitude',
         'telephone_unite',
         'mail_unite',
-        'capacite_unite',
-        'rayon_intervention',
+        'statut',
     ];
 
     protected $casts = [
         'longitude' => 'decimal:8',
         'latitude' => 'decimal:8',
-        'rayon_intervention_km' => 'decimal:2'
     ];
 
     // Relations
@@ -34,10 +32,6 @@ class unite extends Model
         return $this->hasMany(Autorite::class);
     }
 
-    public function admin()
-    {
-        return $this->hasOne(Admin::class);
-    }
 
     public function alertes()
     {
